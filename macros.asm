@@ -49,9 +49,7 @@ mPrintTable macro
         sub AX, CX
         cmp AX, 18h
         je end_row_loop ; Si no es igual, entonces imprimimos el numero de fila
-        mov DX, AX
-        mov AH, 09h
-        int 21
+        mPrintMsg rowName
         dec CX
         jmp row_loop
     end_row_loop:
