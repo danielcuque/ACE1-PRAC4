@@ -3,40 +3,40 @@ INCLUDE macros.asm
 .MODEl small
 .STACK
 .RADIX 16
-colDimension equ 11
-rowDimension equ 23
+colDimension equ 11t ; 11 columnas
+rowDimension equ 23t ; 23 filas
 .DATA
 
 ; ------------------------------------
 ; Palabras reservadas
-ENCommand DB 'EN'
-YCommand DB 'Y'
-ENTRECommand DB 'ENTRE'
-ALACommand DB 'A LA'
-HASTACommand DB 'HASTA'
-DESDECommand DB 'DESDE'
-HACIACommand DB 'HACIA'
+ENCommand DB 02, 'EN'
+YCommand DB 01,'Y'
+ENTRECommand DB 05,'ENTRE'
+ALACommand DB 04, 'A LA'
+HASTACommand DB 05,'HASTA'
+DESDECommand DB 05,'DESDE'
+HACIACommand DB 05,'HACIA'
 ; ------------------------------------
 
 ; ------------------------------------
 ; Comandos para operaciones sobre celdas
-GUARDARCommand DB 'GUARDAR'
-SUMACommand DB 'SUMA'
-RESTACommand DB 'RESTA'
-MULTIPLICACIONCommand DB 'MULTIPLICACION'
-DIVIDIRCommand DB 'DIVIDIR'
-POTENCIARCommand DB 'POTENCIAR'
-OLOGICOCommand DB 'OLOGICO'
-YLOGICOCommand DB 'YLOGICO'
-OXLOGICOCommand DB 'OXLOGICO'
-NOLOGICOCommand DB 'NOLOGICO'
+GUARDARCommand DB 07,'GUARDAR'
+SUMACommand DB 04,'SUMA'
+RESTACommand DB '05,RESTA'
+MULTIPLICACIONCommand DB 0Eh,'MULTIPLICACION'
+DIVIDIRCommand DB 07,'DIVIDIR'
+POTENCIARCommand DB 09,'POTENCIAR'
+OLOGICOCommand DB 07,'OLOGICO'
+YLOGICOCommand DB 07,'YLOGICO'
+OXLOGICOCommand DB 09,'OXLOGICO'
+NOLOGICOCommand DB 09,'NOLOGICO'
 ; ------------------------------------
 ; ------------------------------------
 ; Comandos para operaciones sobre rangos
-LLENARCommand DB 'LLENAR'
-PROMEDIOCommand DB 'PROMEDIO'
-MINIMOCommand DB 'MINIMO'
-MAXIMOCommand DB 'MAXIMO'
+LLENARCommand DB 06,'LLENAR'
+PROMEDIOCommand DB 08,'PROMEDIO'
+MINIMOCommand DB 06,'MINIMO'
+MAXIMOCommand DB 06,'MAXIMO'
 ; ------------------------------------
 
 ; ------------------------------------
@@ -46,13 +46,14 @@ TABULADORCommand DB 09h
 EXPORTARCommand DB 'EXPORTAR'
 ; ------------------------------------
 
-; Creamos la información de incio, seguido de la espera de ENTER para pasar al menú
-infoMsg DB 'Universidad de San Carlos de Guatemala', 0Dh, 0Ah,'Facultad de Ingenieria', 0Dh, 0Ah,'Escuela de Ciencias y Sistemas', 0Dh, 0Ah,'Arquitectura de computadores y ensambladores 1', 0Dh, 0Ah,'Seccion B', 0Dh, 0Ah,'Daniel Estuardo Cuque Ruiz' , 0Dh, 0Ah,'202112145', 0Dh, 0Ah, '$'
 
 ; ------------------------------------
 ; Variables extra
-
+infoMsg DB 'Universidad de San Carlos de Guatemala', 0Dh, 0Ah,'Facultad de Ingenieria', 0Dh, 0Ah,'Escuela de Ciencias y Sistemas', 0Dh, 0Ah,'Arquitectura de computadores y ensambladores 1', 0Dh, 0Ah,'Seccion B', 0Dh, 0Ah,'Daniel Estuardo Cuque Ruiz' , 0Dh, 0Ah,'202112145', 0Dh, 0Ah, '$'
 pressEnterMsg DB 'Presione ENTER para continuar', 0Dh, 0Ah, '$'
+newLine DB 0Dh, 0Ah, '$'
+dobleEspacio DB '  ', '$'
+cero DB '0', '$'
 ; ------------------------------------
 
 ; ------------------------------------
@@ -60,7 +61,7 @@ pressEnterMsg DB 'Presione ENTER para continuar', 0Dh, 0Ah, '$'
 colName DB '             A     B     C     D     E     F     G     H     I     J     K  ', 0Dh, 0Ah, '$'
 rowName DB '   0 '
 emptyCell DB '000000' ; 6 bytes
-mainTable DB 253 dup(0)
+mainTable DW 253 dup(0)
 ; ------------------------------------
 
 ; ------------------------------------
@@ -74,12 +75,10 @@ keyBoard db 102 dup (0ff,0)
 .CODE
 start:
 main PROC
-mConfigData
-mPrintMsg infoMsg
-mWaitEnter
-mStartProgram
-
-;; Llamamos a la interrupcion del programa
+    mConfigData
+    mPrintMsg infoMsg
+    mWaitEnter
+    mPrintTable
 mExit
 main ENDP
 END start
