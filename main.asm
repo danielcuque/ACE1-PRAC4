@@ -59,8 +59,13 @@ pressEnterMsg DB 'Presione ENTER para continuar', 0Dh, 0Ah, '$'
 ; Tablero
 colName DB '             A     B     C     D     E     F     G     H     I     J     K  ', 0Dh, 0Ah, '$'
 rowName DB '   0 '
+emptyCell DB '000000' ; 6 bytes
 mainTable DB 253 dup(0)
 ; ------------------------------------
+
+; ------------------------------------
+; Buffer del teclado
+keyBoard db 102 dup (0ff,0)
 
 ; ------------------------------------
 ; Mensajes de error
@@ -72,8 +77,7 @@ main PROC
 mConfigData
 mPrintMsg infoMsg
 mWaitEnter
-mPrintMsg colName
-
+mStartProgram
 
 ;; Llamamos a la interrupcion del programa
 mExit

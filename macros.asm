@@ -34,10 +34,21 @@ int 21h
 endm
 ; ------------------------------------
 
-mPrintTable macro table 
-    mov DX, offset table
-    mov AH, 09h
-    int 21h
+mPrintTable macro
+    mPrintMsg colName
+    mov DI, offset mainTable
+    mov CX, 17h ;; 23 decimal -> 17 hex
+    mPrintRow
+endm
+
+mPrintRow macro
+    mov AX, 18h
+    sub CX, AX
+    push CX
+endm
+
+mPrintEmptyCell  macro
+    mPrintMsg emptyCell
 endm
 
 mEmptyBuffer macro buffer
@@ -46,5 +57,10 @@ mEmptyBuffer macro buffer
     mov CH, 00
     add SI, 02 ;; Nos vamos al tercer byte del buffer que es donde empieza la informacion del teclado
     mov AL, 00
+endm
+
+
+mStartProgram macro
+    mPrintTable
 endm
 
