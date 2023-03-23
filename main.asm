@@ -58,10 +58,9 @@ cero DB '0', '$'
 
 ; ------------------------------------
 ; Tablero
-colName DB '             A     B     C     D     E     F     G     H     I     J     K  ', 0Dh, 0Ah, '$'
-emptyCell DB '000000' ; 6 bytes
-mainTable DW 253 dup(0)
-rowName DB ' a'
+colName DB '  A     B     C     D     E     F     G     H     I     J     K  ', 0Dh, 0Ah, '$'
+emptyCell DB '000000', '$' ; 6 bytes
+mainTable DW 0fd dup(0)
 
 ; ------------------------------------
 
