@@ -50,7 +50,7 @@ EXPORTARCommand DB 'EXPORTAR'
 ; ------------------------------------
 ; Variables extra
 infoMsg DB 'Universidad de San Carlos de Guatemala', 0Dh, 0Ah,'Facultad de Ingenieria', 0Dh, 0Ah,'Escuela de Ciencias y Sistemas', 0Dh, 0Ah,'Arquitectura de computadores y ensambladores 1', 0Dh, 0Ah,'Seccion B', 0Dh, 0Ah,'Daniel Estuardo Cuque Ruiz' , 0Dh, 0Ah,'202112145', 0Dh, 0Ah, '$'
-pressEnterMsg DB 'Presione ENTER para continuar', 0Dh, '$'
+pressEnterMsg DB 'Presione ENTER para continuar', '$'
 newLine DB 0Dh, 0Ah, '$'
 espacio DB ' ', '$'
 cero DB '0', '$'

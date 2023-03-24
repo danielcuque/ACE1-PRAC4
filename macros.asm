@@ -2,9 +2,15 @@
 ; ------------------------------------
 ; Servirá para mostrar un mensaje en pantalla
 mPrintMsg macro str
+    push AX
+    push DX
+
     mov DX, offset str
     mov AH, 09h
     int 21h
+
+    pop DX
+    pop AX
 endm
 
 mPrintPartialDirection macro str
@@ -116,12 +122,12 @@ mStringToNum macro number
         loop nextNum
     mov gotten, AX
 
+    ;; Protejo los registros que voy a usar en el macros
     pop SI
     pop DX
     pop CX
     pop BX
     pop AX
-    ;; Protejo los registros que voy a usar en el macros
 endm
 ; ------------------------------------
 
@@ -144,9 +150,9 @@ mPrintTable macro
     printRows:
         mov gotten, BX                  ;; Cargamos a gotten con el registro contador, en este caso es BX
         mNumToString                    ;; Usamos el macro para convertir el número que se almacenó en gotten y covertilo a str
-        mov SI, offset recoveredStr     ;; Cargamos a SI la dirección de memoria con un offset de la variable recoveredStr
-        add SI, 04h                     ;; Le aumentamos 2 para poder imprimir únicamente dos dígitos
-        mPrintPartialDirection SI       ;; Le mandamos esa dirección de memoria a la macro
+        ; mov SI, offset recoveredStr     ;; Cargamos a SI la dirección de memoria con un offset de la variable recoveredStr
+        ;add SI, 04h                     ;; Le aumentamos 2 para poder imprimir únicamente dos dígitos
+        mPrintPartialDirection offset recoveredStr[04h]       ;; Le mandamos esa dirección de memoria a la macro
         mPrintMsg espacio               ;; Le damos un espacio para separarlo de la cuadricula
 
         push CX                         ;; Protegemos nuestro registro CX que guarda el contador para imprimir las filas
@@ -164,7 +170,7 @@ mPrintTable macro
             jne printRows               ;; Regresamos a imprimir una nueva fila
     
     ;; Regresamos a su estado original los registros
-    push SI
+    pop SI
     pop DI
     pop CX
     pop BX
