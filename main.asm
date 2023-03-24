@@ -50,25 +50,27 @@ EXPORTARCommand DB 'EXPORTAR'
 ; ------------------------------------
 ; Variables extra
 infoMsg DB 'Universidad de San Carlos de Guatemala', 0Dh, 0Ah,'Facultad de Ingenieria', 0Dh, 0Ah,'Escuela de Ciencias y Sistemas', 0Dh, 0Ah,'Arquitectura de computadores y ensambladores 1', 0Dh, 0Ah,'Seccion B', 0Dh, 0Ah,'Daniel Estuardo Cuque Ruiz' , 0Dh, 0Ah,'202112145', 0Dh, 0Ah, '$'
-pressEnterMsg DB 'Presione ENTER para continuar', 0Dh, 0Ah, '$'
+pressEnterMsg DB 'Presione ENTER para continuar', 0Dh, '$'
 newLine DB 0Dh, 0Ah, '$'
-dobleEspacio DB '  ', '$'
+espacio DB ' ', '$'
 cero DB '0', '$'
 
 ; ------------------------------------
 ; Para las macros
-gotten DW ?
+gotten DW ?, '$'
 recoveredStr DB 7 DUP('$')
 ; ------------------------------------
 ; Tablero
 colName DB '  A     B     C     D     E     F     G     H     I     J     K  ', 0Dh, 0Ah, '$'
-mainTable DW 0fd dup(00h)
+mainTable DW 253 dup(0)
+emptyCell DB '000000', '$'
+testImp DB '000000', '$'
 
 ; ------------------------------------
 
 ; ------------------------------------
 ; Buffer del teclado
-keyBoard db 102 dup (0ff,0)
+keyBoard db 102 dup (0)
 
 ; ------------------------------------
 ; Mensajes de error
@@ -81,6 +83,7 @@ main PROC
     mPrintMsg infoMsg
     mWaitEnter
     mPrintTable
+    mWaitEnter
     mExit
 main ENDP
 END start

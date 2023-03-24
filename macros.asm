@@ -7,17 +7,6 @@ mPrintMsg macro str
     int 21h
 endm
 
-mPrintMsgWithReg macro reg
-    push AX
-
-    mov AX, reg
-    mov AH, 09
-    int 21
-
-    pop AX
-endm
-; ------------------------------------
-
 ; ------------------------------------
 mConfigData macro
     mov ax, @data
@@ -27,19 +16,19 @@ endm
 
 ; ------------------------------------
 mWaitEnter macro
-    inicio:
+    LOCAL wait_enter
+    wait_enter:
         mPrintMsg pressEnterMsg
         mov AH, 08h
         int 21
         cmp AL, 0Dh
-        jne inicio
+        jne wait_enter
 endm
 ; ------------------------------------
 
 
 ; ------------------------------------
 mNumToString macro
-
     LOCAL extract, store
     push AX
     push BX
@@ -116,44 +105,42 @@ endm
 
 ; ------------------------------------
 mPrintTable macro
+    LOCAL printRows, printCols
     push AX
     push BX
     push CX
     push DI
+
     mPrintMsg colName
 
-    mov DI, offset mainTable
-    xor AX, AX
-    xor BX, BX ;; Mostramos en 0 el registro AX
-    mov BX, 18h ;; Le cargamos a BX el numero de filas
+    mov DI, offset mainTable ; Obtenemos la direccion de memoria del tablero
+    mov BX, 01h ; Colocamos en 0 a BX para llevar el registro del numero de filas
+
+    mov CX, 18h ;; Colocamos en CX el numero de filas
 
     printRows:
-        mov CX, 0Bh ;; Le cargamos a CX el valor del numero de las columnas
 
-        cmp AX, BX ;; Comparamos si el valor de AX es igual al de CX if(ax == cx)
-        je endPrint ;; Si es menor o igual
-        mov gotten, AX ;; Le cargamos a gotten el valor del numbero AX, para que pueda ser representado por el macro
-        mNumToString ;; De lo contrario, entonces convertimos el contador en Str y lo mostramos
-        mPrintMsg recoveredStr ;; Imprimimos el numero recuperado
+        mov gotten, BX
+        mNumToString
+        mPrintMsg recoveredStr
+        mPrintMsg espacio
 
+        push CX
+        mov CX, 0Bh
         printCols:
-            mov DX, [DI] 
-            mov gotten, DX
-            
-            mNumToString
-            mPrintMsg recoveredStr
-            mPrintMsg newLine
-
-            add DI, 02h
+            mPrintMsg testImp
+            mPrintMsg espacio
             loop printCols
+            pop CX
 
-        inc BX ;; Incrementamos en 1 la variable de AX int AX += 1
-        jmp printRows ;; Y repetimos lo de imprimir las filas
-    endPrint:
-        pop DI
-        pop CX
-        pop BX
-        pop AX
+            
+            inc BX
+            loop printRows
+
+    pop DI
+    pop CX
+    pop BX
+    pop AX
 endm
 ; ------------------------------------
 
