@@ -7,6 +7,12 @@ mPrintMsg macro str
     int 21h
 endm
 
+mPrintPartialDirection macro str
+    mov DX, str
+    mov AH, 09h
+    int 21h
+endm
+
 ; ------------------------------------
 mConfigData macro
     mov ax, @data
@@ -29,7 +35,7 @@ endm
 
 ; ------------------------------------
 mNumToString macro
-    LOCAL extract, store
+    LOCAL extract, store, continueStore, addZeroToLeft
     push AX
     push BX
     push CX
@@ -46,11 +52,27 @@ mNumToString macro
         add DX, 30h ; Le sumo a DX el valor de 30 hexa para que el residuo se mueva hacia la posicion del no. ASCII
         push DX ; Meto ese valor de DX en el top de la pila
         inc CX ; Incremento a CX en 1 para asi poder ejecutar el loop
-        cmp ax, 0 ; Si ax no es 0, entonces sigo ejecutando el bloque de codigo
+        cmp AX, 0 ; Si ax no es 0, entonces sigo ejecutando el bloque de codigo
         jne extract
 
-    ; mov DX, 06h
-    ; sub DX, CX
+    ; En esta sección vamos a añadir los 0s que faltan al numero hacia la izquierda
+    push DX ;; Primero guardamos la informacion de DX para poder utilizarlo como registro de cuantos 0s faltan
+
+    mov SI, 0
+
+    mov DX, 05h ;; Inicialmente serán 5, ya que si recibimos el valor de 1, entonces queremos que se muestre como 000001
+    sub DX, CX  ;; El valor de CX nos ayudará a saber el tamaño del numero, para el caso de 1, será 5 - 1 = 4
+                ;; Por lo que agregaremos 4 0s
+    addZeroToLeft:
+        cmp DX, 00h
+        je continueStore
+        mov recoveredStr[SI], 30h
+        dec DX
+        inc SI
+        jmp addZeroToLeft
+    continueStore:
+    pop DX
+    
 
     mov SI, 0 ;Inicializo a SI en 0
 
@@ -116,13 +138,17 @@ mPrintTable macro
     mov DI, offset mainTable ; Obtenemos la direccion de memoria del tablero
     mov BX, 01h ; Colocamos en 0 a BX para llevar el registro del numero de filas
 
-    mov CX, 18h ;; Colocamos en CX el numero de filas
+    mov CX, 17h ;; Colocamos en CX el numero de filas
 
     printRows:
 
         mov gotten, BX
         mNumToString
-        mPrintMsg recoveredStr
+        push AX
+        mov SI, offset recoveredStr
+        add SI, 02h
+        mPrintPartialDirection SI
+        pop AX
         mPrintMsg espacio
 
         push CX
