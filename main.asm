@@ -82,6 +82,6 @@ main PROC
     mPrintMsg infoMsg
     mWaitEnter
     mPrintTable
-mExit
+    mExit
 main ENDP
 END start

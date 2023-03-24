@@ -47,25 +47,27 @@ mNumToString macro
 
     mov BX, 0Ah ;; Cargamos a BX con 10
     xor CX, CX ;; Limpiamos a cx
-    mov AX, gotten ;
+    mov AX, gotten ; Le cargamos a AX el valor del numero que queremos convertir
 
     extract:
-        xor DX, DX
-        div BX
-        add DX, 30h
-        push DX
-        inc CX
-        cmp ax, 0
+        xor DX, DX ; Limpio a DX
+        div BX ; Obtengo el residuo de la division 
+        add DX, 30h ; Le sumo a DX el valor de 30 hexa para que el residuo se mueva hacia la posicion del no. ASCII
+        push DX ; Meto ese valor de DX en el top de la pila
+        inc CX ; Incremento a CX en 1 para asi poder ejecutar el loop
+        cmp ax, 0 ; Si ax no es 0, entonces sigo ejecutando el bloque de codigo
         jne extract
     
-    mov SI, 0
+    mov SI, 0 ;Inicializo a SI en 0
 
     store:
-        pop DX
-        mov recoveredStr[SI], DL
-        inc SI
-        loop store
+        pop DX ; Despues tengo que hacer la misma cantidad de pops que de push, e ir sacando los valores de DX 
+        mov recoveredStr[SI], DL ; El resultado de las operaciones se almacenan en la parte baja de DX por lo que 
+                                 ; usamos D low (DL) 
+        inc SI                   ; Incrementamos en 1 la dirección de memoria para acceder al byte que le corresponde int SI += 1
+        loop store               ; Se ejecuta el loop hasta que CX llegue a 0
     
+    ; Regresamos sus registros al estado en el que estaban
     pop SI
     pop DX
     pop CX
@@ -106,22 +108,40 @@ mStringToNum macro number
     ;; Protejo los registros que voy a usar en el macros
 endm
 ; ------------------------------------
+
 ; ------------------------------------
 mPrintTable macro
+    push AX
+    push BX
+    push CX
+    push DI
     mPrintMsg colName
 
     mov DI, offset mainTable
-    mov CX, 17h ;; Le cargamos a CX el valor del numero de filas
-    mov AX, 01h ;; Cargamos a AX como 0 para que vaya incrementando
+    xor AX, AX
+    xor BX, BX ;; Mostramos en 0 el registro AX
+    mov BX, 18h ;; Le cargamos a BX el numero de filas
+    mov CX, 0Bh ;; Le cargamos a CX el valor del numero de las columnas
 
     printRows:
-        cmp AX, CX
-        je endPrint
-        mNumToString AX
+        cmp AX, CX ;; Comparamos si el valor de AX es igual al de CX if(ax == cx)
+        je endPrint ;; Si es menor o igual
+        mov gotten, AX ;; Le cargamos a gotten el valor del numbero AX, para que pueda ser representado por el macro
+        mNumToString;; De lo contrario, entonces convertimos el contador en Str y lo mostramos
         mPrintMsg recoveredStr
-        inc AX
-        jmp printRows
+
+
+        printCols:
+            mov DX, [DI]
+            loop printCols
+
+        inc BX ;; Incrementamos en 1 la variable de AX int AX += 1
+        jmp printRows ;; Y repetimos lo de imprimir las filas
 endPrint:
+    pop DI
+    pop CX
+    pop BX
+    pop AX
 endm
 ; ------------------------------------
 
