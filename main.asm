@@ -54,8 +54,11 @@ pressEnterMsg DB 'Presione ENTER para continuar', 0Dh, 0Ah, '$'
 newLine DB 0Dh, 0Ah, '$'
 dobleEspacio DB '  ', '$'
 cero DB '0', '$'
-; ------------------------------------
 
+; ------------------------------------
+; Para las macros
+gotten DW ?
+recoveredStr DB 7 DUP(24)
 ; ------------------------------------
 ; Tablero
 colName DB '  A     B     C     D     E     F     G     H     I     J     K  ', 0Dh, 0Ah, '$'

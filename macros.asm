@@ -1,11 +1,20 @@
 ;; MACROS
-
 ; ------------------------------------
 ; Servirá para mostrar un mensaje en pantalla
 mPrintMsg macro str
     mov DX, offset str
     mov AH, 09h
     int 21h
+endm
+
+mPrintMsgWithReg macro reg
+    push AX
+
+    mov AX, reg
+    mov AH, 09
+    int 21
+
+    pop AX
 endm
 ; ------------------------------------
 
@@ -27,101 +36,94 @@ mWaitEnter macro
 endm
 ; ------------------------------------
 
+
 ; ------------------------------------
-mExit macro
-mov AH, 4Ch
-int 21h
+mNumToString macro
+    push AX
+    push BX
+    push CX
+    push DX
+    push SI
+
+    mov BX, 0Ah ;; Cargamos a BX con 10
+    xor CX, CX ;; Limpiamos a cx
+    mov AX, gotten ;
+
+    extract:
+        xor DX, DX
+        div BX
+        add DX, 30h
+        push DX
+        inc CX
+        cmp ax, 0
+        jne extract
+    
+    mov SI, 0
+
+    store:
+        pop DX
+        mov recoveredStr[SI], DL
+        inc SI
+        loop store
+    
+    pop SI
+    pop DX
+    pop CX
+    pop BX
+    pop AX
+endm 
+; ------------------------------------
+
+; ------------------------------------
+mStringToNum macro number
+    ;; Protejo los registros que voy a usar en el macros
+    push AX
+    push BX
+    push CX
+    push DX
+    push SI
+
+    xor SI, SI ; Limpio SI
+    xor AX, AX ; Limpio AX
+    xor DX, DX ; Limpio DX
+    mov BX, 0Ah ; Cargo a BX con 10 decimal
+    mov CX, 5 ; Cargo a CX con 5 para que ese sea el numero de repeticiones que haga el loop
+
+    nextNum:
+        mul BX 
+        mov DL, number[SI]
+        sub DL, 30h
+        add AX, DX
+        inc SI
+        loop nextNum
+    mov gotten, AX
+
+    pop SI
+    pop DX
+    pop CX
+    pop BX
+    pop AX
+    ;; Protejo los registros que voy a usar en el macros
 endm
 ; ------------------------------------
 ; ------------------------------------
-
-mConvertToStr macro
-       mov CX, 06h
-                mov BX, offset emptyCell
-                mov DX, 30h
-
-limpiar:        mov [BX], DL
-                inc BX
-                loop limpiar
-                dec BX                   ;;; Posicionarse en el caracter de las unidades
-                cmp AX, 0000h            ;;; Si el número es 0 no hacer nada
-                je retorno
-		jg unidad
-		not AX
-		mov DL, 2d
-		mov [emptyCell], DL
-unidad:         mov DL,[BX]              ;;; Incrementar las unidades
-                inc DL
-                mov [BX],DL
-                dec AX                   ;;; Decrementar el número de entrada
-                mov SI, BX               ;;; Guardar el dato de la posición de las unidades en otro registro
-revisar_cifra:  mov DX, 3ah              ;;; Si en las unidades está el caracter 3Ah o :
-                cmp [BX], DL
-                je incrementa_ant        ;;; Saltar a la parte donde se incrementa la cifra anterior
-                mov BX, SI               ;;; Restablecer la posición de las unidades en el registro original
-                cmp AX, 0000h            ;;; Si el número de entrada no es 0
-                jne unidad               ;;; Volver a incrementar unidades
-                jmp retorno              ;;; Si no terminar rutina
-incrementa_ant: mov DX, 30h              ;;; Se coloca el caracter '0' en la cifra actual
-                mov [BX], DL
-                dec BX                   ;;; Se mueve el índice a la cifra anterior
-                mov DL, [BX]             ;;; Se incrementa la cifra indexada por BX
-                inc DL
-                mov [BX], DL
-                cmp BX, offset emptyCell    ;;; Si el índice actual no es la direccion de la primera cifra
-                jne revisar_cifra        ;;; revisar la cifra anterior para ver si nuevamente hay que incrementarla
-                mov BX, SI               ;;; Reestablecer la posición de las unidades en el registro original
-                cmp AX, 0000h            ;;; Si el número de entrada no es 0
-                jne unidad               ;;; Volver a incrementar unidades
-retorno:
-endm
-; ------------------------------------
-
 mPrintTable macro
-    mPrintMsg colName ;; Imprimimos el nombre de la columna
+    mPrintMsg colName
 
     mov DI, offset mainTable
-		mov CX, 17        ;; 23 iteraciones, filas
-impr_fila:	mov AX, 18
-		sub AX, CX
-		push CX
-		mConvertToStr
-		pop CX
+    mov CX, 17h ;; Le cargamos a CX el valor del numero de filas
+    mov AX, 01h ;; Cargamos a AX como 0 para que vaya incrementando
 
-		mov BX, offset emptyCell
-		add BX, 04
-		mov DX, BX        ;; se imprime el número de fila
-		mov AH, 09
-		int 21
-		mov DL, 20        ;; dos espacios
-		mov AH, 02
-		int 21
-		mov DL, 20
-		mov AH, 02
-		int 21
-		push CX           ;; se guarda el contador del ciclo superior
-		mov CX, 0b        ;; 11 iteraciones, columnas
-impr_columna:	
-		mov AX, [DI]
-		push CX
-		mConvertToStr
-		pop CX
-		mov DX, offset emptyCell        ;; se imprime el número leido de memoria
-		mov AH, 09
-		int 21
-		
-		add DI, 02
-		cmp CX, 0001
-		je ciclo_columna
-		mov DL, 20
-		mov AH, 02
-		int 21
-ciclo_columna:	loop impr_columna
-		pop CX
-		loop impr_fila
-fin:
+    printRows:
+        cmp AX, CX
+        je endPrint
+        mNumToString AX
+        mPrintMsg recoveredStr
+        inc AX
+        jmp printRows
+endPrint:
 endm
-
+; ------------------------------------
 
 ; ------------------------------------
 mEmptyBuffer macro buffer
@@ -142,5 +144,12 @@ mGetKey macro buffer
     inc SI
     inc CL
     mov [SI], CL
+endm
+; ------------------------------------
+; ------------------------------------
+; Macro para salir del programa
+mExit macro
+    mov AH, 4Ch ;4C en hexa servirá para cargar y generar la int del programa
+    int 21h
 endm
 ; ------------------------------------
