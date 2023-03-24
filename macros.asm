@@ -132,37 +132,36 @@ mPrintTable macro
     push BX
     push CX
     push DI
+    push SI
 
     mPrintMsg colName
 
-    mov DI, offset mainTable ; Obtenemos la direccion de memoria del tablero
-    mov BX, 01h ; Colocamos en 0 a BX para llevar el registro del numero de filas
+    mov DI, offset mainTable            ;; Obtenemos la direccion de memoria del tablero
+    mov BX, 01h                         ;; Colocamos en 0 a BX para llevar el registro del numero de filas
 
-    mov CX, 17h ;; Colocamos en CX el numero de filas
+    mov CX, 17h                         ;; Colocamos en CX el numero de filas
 
     printRows:
+        mov gotten, BX                  ;; Cargamos a gotten con el registro contador, en este caso es BX
+        mNumToString                    ;; Usamos el macro para convertir el número que se almacenó en gotten y covertilo a str
+        mov SI, offset recoveredStr     ;; Cargamos a SI la dirección de memoria con un offset de la variable recoveredStr
+        add SI, 02h                     ;; Le aumentamos 2 para poder imprimir únicamente dos dígitos
+        mPrintPartialDirection SI       ;; Le mandamos esa dirección de memoria a la macro
+        mPrintMsg espacio               ;; Le damos un espacio para separarlo de la cuadricula
 
-        mov gotten, BX
-        mNumToString
-        push AX
-        mov SI, offset recoveredStr
-        add SI, 02h
-        mPrintPartialDirection SI
-        pop AX
-        mPrintMsg espacio
-
-        push CX
-        mov CX, 0Bh
+        push CX                         ;; Protegemos nuestro registro CX que guarda el contador para imprimir las filas
+        mov CX, 0Bh                     ;; Lo inicializamos en B = 11 dec  para imprimir las columnas
         printCols:
-            mPrintMsg testImp
+            mPrintMsg testImp           
             mPrintMsg espacio
-            loop printCols
-            pop CX
+            loop printCols              ;; Ciclamos hasta que el contador llegue a 0 indicando que ya se imprimieron las columnas
+            pop CX                      ;; Regresamos el valor del contador de las filas a su estado original
 
-            
-            inc BX
-            loop printRows
-
+            inc BX                      ;; Incrementamos en 1 el contador que lleva el registro de las filas
+            loop printRows              ;; Ciclamos para imprimir las filas
+    
+    ;; Regresamos a su estado original los registros
+    push SI
     pop DI
     pop CX
     pop BX
