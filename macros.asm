@@ -60,9 +60,9 @@ mNumToString macro
 
     mov SI, 0
 
-    mov DX, 05h ;; Inicialmente serán 5, ya que si recibimos el valor de 1, entonces queremos que se muestre como 000001
-    sub DX, CX  ;; El valor de CX nos ayudará a saber el tamaño del numero, para el caso de 1, será 5 - 1 = 4
-                ;; Por lo que agregaremos 4 0s
+    mov DX, 07h ;; Inicialmente serán 6, ya que si recibimos el valor de 1, entonces queremos que se muestre como 000001
+    sub DX, CX  ;; El valor de CX nos ayudará a saber el tamaño del numero, para el caso de 1, será 6 - 1 = 5
+                ;; Por lo que agregaremos 5 0s
     addZeroToLeft:
         cmp DX, 00h
         je continueStore
@@ -105,7 +105,7 @@ mStringToNum macro number
     xor AX, AX ; Limpio AX
     xor DX, DX ; Limpio DX
     mov BX, 0Ah ; Cargo a BX con 10 decimal
-    mov CX, 5 ; Cargo a CX con 5 para que ese sea el numero de repeticiones que haga el loop
+    mov CX, 05h ; Cargo a CX con 5 para que ese sea el numero de repeticiones que haga el loop
 
     nextNum:
         mul BX 
@@ -145,20 +145,21 @@ mPrintTable macro
         mov gotten, BX                  ;; Cargamos a gotten con el registro contador, en este caso es BX
         mNumToString                    ;; Usamos el macro para convertir el número que se almacenó en gotten y covertilo a str
         mov SI, offset recoveredStr     ;; Cargamos a SI la dirección de memoria con un offset de la variable recoveredStr
-        add SI, 02h                     ;; Le aumentamos 2 para poder imprimir únicamente dos dígitos
+        add SI, 04h                     ;; Le aumentamos 2 para poder imprimir únicamente dos dígitos
         mPrintPartialDirection SI       ;; Le mandamos esa dirección de memoria a la macro
         mPrintMsg espacio               ;; Le damos un espacio para separarlo de la cuadricula
 
         push CX                         ;; Protegemos nuestro registro CX que guarda el contador para imprimir las filas
         mov CX, 0Bh                     ;; Lo inicializamos en B = 11 dec  para imprimir las columnas
         printCols:
-            mPrintMsg testImp           
-            mPrintMsg espacio
+            mov gotten, DI
+            mPrintNumberConverted           
             loop printCols              ;; Ciclamos hasta que el contador llegue a 0 indicando que ya se imprimieron las columnas
             pop CX                      ;; Regresamos el valor del contador de las filas a su estado original
-
             inc BX                      ;; Incrementamos en 1 el contador que lleva el registro de las filas
-            loop printRows              ;; Ciclamos para imprimir las filas
+            dec CX
+            cmp CX, 00h
+            jne printRows
     
     ;; Regresamos a su estado original los registros
     push SI
@@ -168,6 +169,12 @@ mPrintTable macro
     pop AX
 endm
 ; ------------------------------------
+
+mPrintNumberConverted macro
+    mNumToString 
+    mPrintMsg recoveredStr
+    mPrintMsg espacio
+endm
 
 ; ------------------------------------
 mEmptyBuffer macro buffer

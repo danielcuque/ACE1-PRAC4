@@ -63,8 +63,6 @@ recoveredStr DB 7 DUP('$')
 ; Tablero
 colName DB '      A      B      C      D      E      F      G      H      I      J      K  ', 0Dh, 0Ah, '$'
 mainTable DW 253 dup(0)
-emptyCell DB '000000', '$'
-testImp DB '000000', '$'
 
 ; ------------------------------------
 
