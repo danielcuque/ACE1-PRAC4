@@ -152,14 +152,16 @@ mPrintTable macro
         push CX                         ;; Protegemos nuestro registro CX que guarda el contador para imprimir las filas
         mov CX, 0Bh                     ;; Lo inicializamos en B = 11 dec  para imprimir las columnas
         printCols:
-            mov gotten, DI
-            mPrintNumberConverted           
+            mov gotten, DI              ;; Movemos el valor que se encuentra en la posición DI del arreglo 
+            mPrintNumberConverted       ;; Imprimimos el valor de la celda
             loop printCols              ;; Ciclamos hasta que el contador llegue a 0 indicando que ya se imprimieron las columnas
+
             pop CX                      ;; Regresamos el valor del contador de las filas a su estado original
+
             inc BX                      ;; Incrementamos en 1 el contador que lleva el registro de las filas
-            dec CX
-            cmp CX, 00h
-            jne printRows
+            dec CX                      ;; Incrementamos CX para poder recorrer todo el arreglo
+            cmp CX, 00h                 ;; Si CX no es cero, entones que siga imprimiendo filas
+            jne printRows               ;; Regresamos a imprimir una nueva fila
     
     ;; Regresamos a su estado original los registros
     push SI
