@@ -39,6 +39,8 @@ endm
 
 ; ------------------------------------
 mNumToString macro
+
+    LOCAL extract, store
     push AX
     push BX
     push CX
@@ -57,7 +59,10 @@ mNumToString macro
         inc CX ; Incremento a CX en 1 para asi poder ejecutar el loop
         cmp ax, 0 ; Si ax no es 0, entonces sigo ejecutando el bloque de codigo
         jne extract
-    
+
+    ; mov DX, 06h
+    ; sub DX, CX
+
     mov SI, 0 ;Inicializo a SI en 0
 
     store:
@@ -121,27 +126,34 @@ mPrintTable macro
     xor AX, AX
     xor BX, BX ;; Mostramos en 0 el registro AX
     mov BX, 18h ;; Le cargamos a BX el numero de filas
-    mov CX, 0Bh ;; Le cargamos a CX el valor del numero de las columnas
 
     printRows:
-        cmp AX, CX ;; Comparamos si el valor de AX es igual al de CX if(ax == cx)
+        mov CX, 0Bh ;; Le cargamos a CX el valor del numero de las columnas
+
+        cmp AX, BX ;; Comparamos si el valor de AX es igual al de CX if(ax == cx)
         je endPrint ;; Si es menor o igual
         mov gotten, AX ;; Le cargamos a gotten el valor del numbero AX, para que pueda ser representado por el macro
-        mNumToString;; De lo contrario, entonces convertimos el contador en Str y lo mostramos
-        mPrintMsg recoveredStr
-
+        mNumToString ;; De lo contrario, entonces convertimos el contador en Str y lo mostramos
+        mPrintMsg recoveredStr ;; Imprimimos el numero recuperado
 
         printCols:
-            mov DX, [DI]
+            mov DX, [DI] 
+            mov gotten, DX
+            
+            mNumToString
+            mPrintMsg recoveredStr
+            mPrintMsg newLine
+
+            add DI, 02h
             loop printCols
 
         inc BX ;; Incrementamos en 1 la variable de AX int AX += 1
         jmp printRows ;; Y repetimos lo de imprimir las filas
-endPrint:
-    pop DI
-    pop CX
-    pop BX
-    pop AX
+    endPrint:
+        pop DI
+        pop CX
+        pop BX
+        pop AX
 endm
 ; ------------------------------------
 

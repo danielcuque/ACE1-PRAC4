@@ -58,12 +58,11 @@ cero DB '0', '$'
 ; ------------------------------------
 ; Para las macros
 gotten DW ?
-recoveredStr DB 7 DUP(24)
+recoveredStr DB 7 DUP('$')
 ; ------------------------------------
 ; Tablero
 colName DB '  A     B     C     D     E     F     G     H     I     J     K  ', 0Dh, 0Ah, '$'
-emptyCell DB '000000', '$' ; 6 bytes
-mainTable DW 0fd dup(0)
+mainTable DW 0fd dup(00h)
 
 ; ------------------------------------
 
