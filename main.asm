@@ -9,14 +9,15 @@ rowDimension equ 23t ; 23 filas
 
 ; ------------------------------------
 ; Palabras reservadas
-ENCommand DB 02, 'EN'
-YCommand DB 01,'Y'
-ENTRECommand DB 05,'ENTRE'
-ALACommand DB 04, 'A LA'
-HASTACommand DB 05,'HASTA'
-DESDECommand DB 05,'DESDE'
-HACIACommand DB 05,'HACIA'
-SALIRCommand DB, 
+ENCommand DB 'EN'
+YCommand DB 'Y'
+ENTRECommand DB 'ENTRE'
+ALACommand DB 'A LA'
+HASTACommand DB 'HASTA'
+DESDECommand DB 'DESDE'
+HACIACommand DB 'HACIA'
+SALIRCommand DB 'SALIR'
+PORTABCommand DB 'SEPARADOR POR TABULADOR'
 ; ------------------------------------
 
 ; ------------------------------------
@@ -64,8 +65,9 @@ recoveredStr DB 7 DUP('$')
 ; Tablero
 colName DB 0Dh,'      A      B      C      D      E      F      G      H      I      J      K  ', 0Dh, 0Ah, '$'
 mainTable DW 253 dup(0)
-
 ; ------------------------------------
+; Variables para leer el archivo de entrada
+fileNameBuffer DB 100h dup(0)
 
 ; ------------------------------------
 ; Buffer del teclado

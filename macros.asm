@@ -220,6 +220,10 @@ mEmptyBuffer macro
     pop SI
 endm
 
+mSkipWhiteSpace macro
+    
+endm
+
 ; ------------------------------------
 ; Macro para leer con el teclado y guardarlo en el buffer del teclado
 mGetCommand macro
