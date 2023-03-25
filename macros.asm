@@ -37,19 +37,25 @@ mStartProgram macro
         mPrintTable
         mGetCommand
         mEvaluateCommand
-        cmp isRunProgram, 00
-        jmp startProgram
+        cmp isRunProgram, 00h
+        je startProgram
     exitProgram:
         mExit
 endm
 
 mEvaluateCommand macro
-    LOCAL
+    LOCAL startEvaluate
+    push CX
+    push AX
+    xor CX, CX
+    mov SI, offset keyBoardBuffer
+    add SI, 02h
+    pop AX
+    pop CX
 endm
 
-mCompareStr macro
+mCompareStr macro str1, str2
     LOCAL 
-    
 endm
 
 ; ------------------------------------
@@ -65,7 +71,7 @@ mNumToString macro
 
     mov BX, 0Ah                             ;; Cargamos a BX con 10
     xor CX, CX                              ;; Limpiamos a cx
-    mov AX, gotten                          ;; Le cargamos a AX el valor del numero que queremos convertir
+    mov AX, numberGotten                          ;; Le cargamos a AX el valor del numero que queremos convertir
 
     extract:
         xor DX, DX                          ;; Limpio a DX
@@ -140,7 +146,7 @@ mStringToNum macro number
         add AX, DX
         inc SI
         loop nextNum
-    mov gotten, AX
+    mov numberGotten, AX
 
     ;; Protejo los registros que voy a usar en el macros
     pop SI
@@ -168,15 +174,15 @@ mPrintTable macro
     mov CX, 17h                         ;; Colocamos en CX el numero de filas
 
     printRows:
-        mov gotten, BX                  ;; Cargamos a gotten con el registro contador, en este caso es BX
-        mNumToString                    ;; Usamos el macro para convertir el número que se almacenó en gotten y covertilo a str
+        mov numberGotten, BX                  ;; Cargamos a numberGotten con el registro contador, en este caso es BX
+        mNumToString                    ;; Usamos el macro para convertir el número que se almacenó en numberGotten y covertilo a str
         mPrintPartialDirection offset recoveredStr[04h]       ;; Le mandamos esa dirección de memoria a la macro
         mPrintMsg espacio               ;; Le damos un espacio para separarlo de la cuadricula
 
         push CX                         ;; Protegemos nuestro registro CX que guarda el contador para imprimir las filas
         mov CX, 0Bh                     ;; Lo inicializamos en B = 11 dec  para imprimir las columnas
         printCols:
-            mov DI, offset gotten
+            mov DI, offset numberGotten
             mov DX, [SI]
             mov [DI], DL                ;; Movemos el valor que se encuentra en la posición DI del arreglo 
             mPrintNumberConverted       ;; Imprimimos el valor de la celda
@@ -217,7 +223,7 @@ mEmptyBuffer macro
 
     mov CX, 100h
     sub CX, 01h
-    
+
     emptyBuffer:
         mov [SI], AL
         inc SI

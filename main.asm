@@ -47,7 +47,8 @@ IMPORTARCommand DB 'IMPORTAR'
 TABULADORCommand DB 09h
 EXPORTARCommand DB 'EXPORTAR'
 ; ------------------------------------
-
+; Variables para utilizarlas como auxiliares para comparar la evaluacion de comandos
+isStringEqual DB 00h  ;; El estado 0 representa que no son iguales 
 
 ; ------------------------------------
 ; Variables extra
@@ -56,10 +57,9 @@ pressEnterMsg DB 'Presione ENTER para continuar', '$'
 newLine DB 0Dh, 0Ah, '$'
 espacio DB ' ', '$'
 counterToGetIndexGotten DW 0 ;; Esta variable me servirá para poder hacer el corrimiento de SI e insertar el numero donde corresponde
-
 ; ------------------------------------
 ; Para las macros
-gotten DW ?, '$'
+numberGotten DW ?, '$'
 recoveredStr DB 7 DUP('$')
 ; ------------------------------------
 ; Tablero
