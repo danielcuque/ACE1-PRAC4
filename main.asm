@@ -16,6 +16,7 @@ ALACommand DB 04, 'A LA'
 HASTACommand DB 05,'HASTA'
 DESDECommand DB 05,'DESDE'
 HACIACommand DB 05,'HACIA'
+SALIRCommand DB, 
 ; ------------------------------------
 
 ; ------------------------------------
@@ -68,7 +69,8 @@ mainTable DW 253 dup(0)
 
 ; ------------------------------------
 ; Buffer del teclado
-keyBoard db 102 dup (0)
+keyBoardBuffer db 100h dup (0ff,0)
+colonChar db ': $'
 
 ; ------------------------------------
 ; Mensajes de error
@@ -76,12 +78,11 @@ keyBoard db 102 dup (0)
 
 .CODE
 start:
-main PROC
-    mConfigData
-    mPrintMsg infoMsg
-    mWaitEnter
-    mPrintTable
-    mWaitEnter
-    mExit
-main ENDP
+    main PROC
+        mov ax, @data
+        mov ds, ax
+        mPrintMsg infoMsg
+        mWaitEnter
+        mStartProgram
+    main ENDP
 END start

@@ -20,13 +20,6 @@ mPrintPartialDirection macro str
 endm
 
 ; ------------------------------------
-mConfigData macro
-    mov ax, @data
-    mov ds, ax
-endm
-; ------------------------------------
-
-; ------------------------------------
 mWaitEnter macro
     LOCAL wait_enter
     wait_enter:
@@ -38,16 +31,35 @@ mWaitEnter macro
 endm
 ; ------------------------------------
 
+mStartProgram macro
+    LOCAL startProgram, exitProgram
+    startProgram:
+        mPrintTable
+        mGetCommand
+        mEvaluateCommand
+    exitProgram:
+        mExit
+endm
+
+mEvaluateCommand macro
+    LOCAL
+endm
+
+mCompareStr macro
+    LOCAL 
+    
+endm
 
 ; ------------------------------------
 mNumToString macro
-    LOCAL extract, store, continueStore, addZeroToLeft
+    LOCAL extract, store, continueStore, addZeroToLeft, negative
     ;; Protegemos nuestros registros
     push AX
     push BX
     push CX
     push DX
     push SI
+    push DI
 
     mov BX, 0Ah                             ;; Cargamos a BX con 10
     xor CX, CX                              ;; Limpiamos a cx
@@ -85,6 +97,8 @@ mNumToString macro
         mov SI, 0                           ;; Inicializo a SI en 0
         add SI, [counterToGetIndexGotten]   ;; Nos movemos con SI, hacia el numero en memoria que le corresponde a la cadena
 
+    ;; TODO: Convertir a negativo
+
     store:
         pop DX                              ;; Despues tengo que hacer la misma cantidad de pops que de push, e ir sacando los valores de DX 
         mov recoveredStr[SI], DL            ;; El resultado de las operaciones se almacenan en la parte baja de DX por lo que 
@@ -93,6 +107,7 @@ mNumToString macro
         loop store                          ;; Se ejecuta el loop hasta que CX llegue a 0
     
     ; Regresamos sus registros al estado en el que estaban
+    pop DI
     pop SI
     pop DX
     pop CX
@@ -188,24 +203,45 @@ mPrintNumberConverted macro
 endm
 
 ; ------------------------------------
-mEmptyBuffer macro buffer
-    mov SI, offset buffer
-    mov CL, [SI]
-    mov CH, 00
-    add SI, 02 ;; Nos vamos al tercer byte del buffer que es donde empieza la informacion del teclado
-    mov AL, 00
+mEmptyBuffer macro
+    push SI
+    push CX
+
+    mov SI, offset keyBoardBuffer
+    inc SI
+
+    mov CX, 100h
+    sub CX, 01h
+    emptyBuffer:
+        mov [SI], 00h
+        inc SI
+        loop emptyBuffer
+    pop CX
+    pop SI
 endm
 
 ; ------------------------------------
 ; Macro para leer con el teclado y guardarlo en el buffer del teclado
-mGetKey macro buffer
-    mEmptyBuffer buffer
-    mov AH, 01h
-    int 16h
-    mov [SI], AL
-    inc SI
-    inc CL
-    mov [SI], CL
+mGetCommand macro
+    push DX
+    push AX
+    push SI
+    push CX
+
+    mEmptyBuffer
+
+    mov DX, offset colonChar
+    mov AH, 09h
+    int 21h
+
+    mov DX, offset keyBoardBuffer
+    mov AH, 0Ah
+    int 21h
+
+    pop CX
+    pop SI
+    pop AX
+    pop DX
 endm
 ; ------------------------------------
 ; ------------------------------------
