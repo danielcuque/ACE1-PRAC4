@@ -53,7 +53,7 @@ infoMsg DB 'Universidad de San Carlos de Guatemala', 0Dh, 0Ah,'Facultad de Ingen
 pressEnterMsg DB 'Presione ENTER para continuar', '$'
 newLine DB 0Dh, 0Ah, '$'
 espacio DB ' ', '$'
-counterToGetIndexGotten DW 0
+counterToGetIndexGotten DW 0 ;; Esta variable me servirá para poder hacer el corrimiento de SI e insertar el numero donde corresponde
 
 ; ------------------------------------
 ; Para las macros

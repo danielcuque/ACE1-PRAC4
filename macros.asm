@@ -42,52 +42,55 @@ endm
 ; ------------------------------------
 mNumToString macro
     LOCAL extract, store, continueStore, addZeroToLeft
+    ;; Protegemos nuestros registros
     push AX
     push BX
     push CX
     push DX
     push SI
 
-    mov BX, 0Ah             ;; Cargamos a BX con 10
-    xor CX, CX              ;; Limpiamos a cx
-    mov AX, gotten          ;; Le cargamos a AX el valor del numero que queremos convertir
+    mov BX, 0Ah                             ;; Cargamos a BX con 10
+    xor CX, CX                              ;; Limpiamos a cx
+    mov AX, gotten                          ;; Le cargamos a AX el valor del numero que queremos convertir
 
     extract:
-        xor DX, DX          ;; Limpio a DX
-        div BX              ;; Obtengo el residuo de la division 
-        add DX, 30h         ;; Le sumo a DX el valor de 30 hexa para que el residuo se mueva hacia la posicion del no. ASCII
-        push DX             ;; Meto ese valor de DX en el top de la pila
-        inc CX              ;; Incremento a CX en 1 para asi poder ejecutar el loop
-        cmp AX, 0           ;; Si ax no es 0, entonces sigo ejecutando el bloque de codigo
+        xor DX, DX                          ;; Limpio a DX
+        div BX                              ;; Obtengo el residuo de la division 
+        add DX, 30h                         ;; Le sumo a DX el valor de 30 hexa para que el residuo se mueva hacia la posicion del no. ASCII
+        push DX                             ;; Meto ese valor de DX en el top de la pila
+        inc CX                              ;; Incremento a CX en 1 para asi poder ejecutar el loop
+        cmp AX, 0                           ;; Si ax no es 0, entonces sigo ejecutando el bloque de codigo
         jne extract
 
-    ; En esta sección vamos a añadir los 0s que faltan al numero hacia la izquierda
-    push DX                 ;; Primero guardamos la informacion de DX para poder utilizarlo como registro de cuantos 0s faltan
+    ;; En esta sección vamos a añadir los 0s que faltan al numero hacia la izquierda
+    push DX                                 ;; Primero guardamos la informacion de DX para poder utilizarlo como registro de cuantos 0s faltan
 
-    mov SI, 0               ;; Colocamos a SI
+    mov SI, 0                               ;; Colocamos a SI
 
-    mov DX, 06h             ;; Inicialmente serán 6, ya que si recibimos el valor de 1, entonces queremos que se muestre como 000001
-    sub DX, CX              ;; El valor de CX nos ayudará a saber el tamaño del numero, para el caso de 1, será 6 - 1 = 5
-                            ;; Por lo que agregaremos 5 0s
-    mov [counterToGetIndexGotten], DX
+    mov DX, 06h                             ;; Inicialmente serán 6, ya que si recibimos el valor de 1, entonces queremos que se muestre como 000001
+    sub DX, CX                              ;; El valor de CX nos ayudará a saber el tamaño del numero, para el caso de 1, será 6 - 1 = 5
+                                            ;; Por lo que agregaremos 5 0s
+    mov [counterToGetIndexGotten], DX       ;; Muevo el valor en el que se quedó DX para poder correrme a esa posición de la cadena
 
     addZeroToLeft:
-        cmp DX, 00h
-        je continueStore
-        mov recoveredStr[SI], 30h
-        dec DX
-        inc SI
-        jmp addZeroToLeft
+        cmp DX, 00h                         ;; Comparo si DX no es 0, si es cero, significa que el num es de 5 cifras
+        je continueStore                    ;; Saltamos a otra etiqueta
+        mov recoveredStr[SI], 30h           ;; Si no es asi, entonces modificamos la etiqueta recovered Str donde insertará los 0s que hagan falta
+        dec DX                              ;; Decrementamos a DX para que poder acabar el ciclo
+        inc SI                              ;; Incrementamos SI para avanzar en la cadena
+        jmp addZeroToLeft                   ;; Creamos un pseudo loop para insertar los 0s
+
     continueStore:
-    pop DX
-    mov SI, 0               ;; Inicializo a SI en 0
-    add SI, [counterToGetIndexGotten]
+        pop DX                              ;; Sacamos el valor de DX que estaba en el top para poder regresarlo a como estaba
+        mov SI, 0                           ;; Inicializo a SI en 0
+        add SI, [counterToGetIndexGotten]   ;; Nos movemos con SI, hacia el numero en memoria que le corresponde a la cadena
+
     store:
-        pop DX ; Despues tengo que hacer la misma cantidad de pops que de push, e ir sacando los valores de DX 
-        mov recoveredStr[SI], DL ; El resultado de las operaciones se almacenan en la parte baja de DX por lo que 
-                                 ; usamos D low (DL) 
-        inc SI                   ; Incrementamos en 1 la dirección de memoria para acceder al byte que le corresponde int SI += 1
-        loop store               ; Se ejecuta el loop hasta que CX llegue a 0
+        pop DX                              ;; Despues tengo que hacer la misma cantidad de pops que de push, e ir sacando los valores de DX 
+        mov recoveredStr[SI], DL            ;; El resultado de las operaciones se almacenan en la parte baja de DX por lo que 
+                                            ;; usamos D low (DL) 
+        inc SI                              ;; Incrementamos en 1 la dirección de memoria para acceder al byte que le corresponde int SI += 1
+        loop store                          ;; Se ejecuta el loop hasta que CX llegue a 0
     
     ; Regresamos sus registros al estado en el que estaban
     pop SI
