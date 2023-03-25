@@ -66,9 +66,10 @@ mNumToString macro
 
     mov SI, 0               ;; Colocamos a SI
 
-    mov DX, 07h             ;; Inicialmente serán 6, ya que si recibimos el valor de 1, entonces queremos que se muestre como 000001
+    mov DX, 06h             ;; Inicialmente serán 6, ya que si recibimos el valor de 1, entonces queremos que se muestre como 000001
     sub DX, CX              ;; El valor de CX nos ayudará a saber el tamaño del numero, para el caso de 1, será 6 - 1 = 5
                             ;; Por lo que agregaremos 5 0s
+    mov [counterToGetIndexGotten], DX
 
     addZeroToLeft:
         cmp DX, 00h
@@ -79,10 +80,8 @@ mNumToString macro
         jmp addZeroToLeft
     continueStore:
     pop DX
-    
-
     mov SI, 0               ;; Inicializo a SI en 0
-
+    add SI, [counterToGetIndexGotten]
     store:
         pop DX ; Despues tengo que hacer la misma cantidad de pops que de push, e ir sacando los valores de DX 
         mov recoveredStr[SI], DL ; El resultado de las operaciones se almacenan en la parte baja de DX por lo que 
