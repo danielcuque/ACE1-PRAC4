@@ -65,6 +65,7 @@ recoveredStr DB 7 DUP('$')
 ; Tablero
 colName DB 0Dh,'      A      B      C      D      E      F      G      H      I      J      K  ', 0Dh, 0Ah, '$'
 mainTable DW 253 dup(0)
+
 ; ------------------------------------
 ; Variables para leer el archivo de entrada
 fileNameBuffer DB 100h dup(0)
@@ -73,9 +74,10 @@ fileNameBuffer DB 100h dup(0)
 ; Buffer del teclado
 keyBoardBuffer db 100h dup (0ff,0)
 colonChar db ': $'
-
+isRunProgram DB 00h
 ; ------------------------------------
 ; Mensajes de error
+errorCommand DB 'El comando no existe', '$'
 ; ------------------------------------
 
 .CODE

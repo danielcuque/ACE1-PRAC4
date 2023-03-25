@@ -37,6 +37,8 @@ mStartProgram macro
         mPrintTable
         mGetCommand
         mEvaluateCommand
+        cmp isRunProgram, 00
+        jmp startProgram
     exitProgram:
         mExit
 endm
@@ -206,22 +208,28 @@ endm
 mEmptyBuffer macro
     push SI
     push CX
+    push AX
 
     mov SI, offset keyBoardBuffer
     inc SI
 
+    mov AL, 00h
+
     mov CX, 100h
     sub CX, 01h
+    
     emptyBuffer:
-        mov [SI], 00h
+        mov [SI], AL
         inc SI
         loop emptyBuffer
+
+    pop DX
     pop CX
     pop SI
 endm
 
 mSkipWhiteSpace macro
-    
+
 endm
 
 ; ------------------------------------
