@@ -53,7 +53,6 @@ infoMsg DB 'Universidad de San Carlos de Guatemala', 0Dh, 0Ah,'Facultad de Ingen
 pressEnterMsg DB 'Presione ENTER para continuar', '$'
 newLine DB 0Dh, 0Ah, '$'
 espacio DB ' ', '$'
-cero DB '0', '$'
 
 ; ------------------------------------
 ; Para las macros
@@ -61,7 +60,7 @@ gotten DW ?, '$'
 recoveredStr DB 7 DUP('$')
 ; ------------------------------------
 ; Tablero
-colName DB '      A      B      C      D      E      F      G      H      I      J      K  ', 0Dh, 0Ah, '$'
+colName DB 0Dh, '      A      B      C      D      E      F      G      H      I      J      K  ', 0Dh, 0Ah, '$'
 mainTable DW 253 dup(0)
 
 ; ------------------------------------
