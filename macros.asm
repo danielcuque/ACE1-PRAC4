@@ -51,15 +51,14 @@ mEvaluateCommand macro
     push SI
     push DI
 
+    xor CX, CX
     mov SI, offset keyBoardBuffer
-    add SI, 02h
-    mov CX, [SI]
-    mov numberGotten, CX
-    mPrintNumberConverted
-    mWaitEnter
-    ; startEvaluate:
-    ;     mPrintMsg colonChar
-    ;     loop startEvaluate
+    inc SI
+    mov CL, [SI]
+
+    startEvaluate:
+        
+        loop startEvaluate
 
     endEvaluate:
     pop DI
