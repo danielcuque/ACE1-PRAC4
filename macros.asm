@@ -127,20 +127,28 @@ mGuardar macro
     cmp DL, 00h                     ;; Mostramos mensaje de error si es el caso
     je errorArgs            
 
-    ;; Para este punto, el punto SI, está posicionado 
+    ;; Para este punto, el punto SI, está posicionado en el primer caracter del arugmento 1 de la función
+    ;; Por ejemplo, si se ingresa el comando GUARDAR 123 EN A1, el índice SI está posicionado en la dirección de memoria de 1
+
     startGuardar:
         mEvaluateGuardarArg1
-        cmp DL, 00
-        je errorArgs
-        jmp endEvaluate
+        cmp DL, 00                  ;; Si la función retorna 00, significa que los argumentos son incorrectos
+        je errorArgs                ;;
+        jmp endEvaluate             ;;
 
     errorArgs:
         mPrintMsg errorArgsStr
         mPrintMsg GUARDARCommand
         mPrintMsg newLine
         mWaitEnter
+
     endEvaluate:
 endm
+
+;; Evalua el argumento 1 de la funcion GUARDAR, esta puede ser
+;; NUMERO           ->  HASTA 5 DIGITOS
+;; REFERENCIA       ->  CELDA DE LA A1 HASTA LA K23
+;; VALOR_RETORNO    -> * (En este valor que almacena operaciones de otras funciones)
 
 mEvaluateGuardarArg1 macro
     LOCAL start, isAsterisk, isNumber, isCell, errorEvaluateArg, end
@@ -152,11 +160,11 @@ mEvaluateGuardarArg1 macro
     xor BX, BX
     mov DL, 01
 
-    mov AX, [SI]
-    mov DI, offset returnValue
+    mov AX, [SI]                        ;; Guardamos en AX, el valor del caracter que está en SI
+    
     start:
-        cmp AL, 02Ah
-        je isAsterisk
+        cmp AL, 02Ah                    ;; Lo primero que hacemos es evaluar si el caracter es un valor de retorno
+        je isAsterisk                   ;; Si sí lo es, saltamos a la etiqueta que sirve para guardar el valor
 
         mIsNumber
         cmp DL, 00
@@ -167,26 +175,24 @@ mEvaluateGuardarArg1 macro
         jne isCell
     
     isAsterisk:
-        mov BX, [DI]
-        mov [guardarParametroNumero], BX
-        mPrintMsg guardarParametroNumero
+        mov DI, offset returnValue          ;; Apuntamos a la variable que tiene el valor de retorno
+        mov BX, [DI]                        ;; Copiamos en BX el valor que tiene *
+        mov [guardarParametroNumero], BX    ;; Lo copiamos en la variable del arg 1
         mWaitEnter
         jmp end 
     
     isNumber:
-
         jmp end
-
     
     isCell:
         jmp end
 
 
     errorEvaluateArg:
-        mov DL, 00                  ;; 00 será para marcar error
+        mov DL, 00                          ;; 00 será para marcar error
 
     end:
-    push DI
+    pop DI
     pop BX
     pop AX
 endm
@@ -197,33 +203,70 @@ mCompareCommand macro commandStr
 endm
 
 
+;; Este macro identifica si la cadena de caracteres es un numero
+;; Si logra identificar un número, entonces modifica la posición de SI hasta donde encuentre espacios
+;; Si no logra identificar un número, no hace nada con el indice SI
+;; El indice SI lleva el control del buffer
 
 mIsNumber macro
-    LOCAL isNot, end
+    LOCAL start, success, isNot, end
     push AX
+    push BX
     push CX
+    push DI
+                
+    mov CX, 00      ;; Este llevara el control de cuantas posiciones aumentar en SI en caso de que sí sea necesario
+    mov BX, SI      ;; Copiamos la direccion de memoria de SI para no modificar SI si no es necesario
+    mov DL, 01h     ;; Cargamos en un inicio a DL con 01 para indicar que es verdadero
+    start:
+        mov AL, [BX]
+        
+        cmp AL, 30h
+        jb isNot
+
+        cmp AL, 39h
+        ja isNot
+
+        cmp AL, 20h    ;; Si llegamos al espacio y todo está correcto, entonces generamos el numero
+        je success 
+
+        inc CX
+        inc BX
+        jmp start
+
+    isNot:
+        mov DL, 00h
+        jmp end
+
+    success:
+        mov DI, 00
+        generateNumber:
+            mov [numberGotten+DI], [SI]
+            loop generateNumber   
 
     end:
+    pop DI
     pop CX
+    pop BX
     pop AX
 endm
 
 mIsCell macro
-    push SI
-    push AX
+    ; push SI
+    ; push AX
     
-    xor AX, AX
-    mov DL, 01
-    mov AL, [SI]
-    cmp AL, 
+    ; xor AX, AX
+    ; mov DL, 01
+    ; mov AL, [SI]
+    ; cmp AL, 
 
-    jmp end
-    isNot:
-        mov DL, 00
+    ; jmp end
+    ; isNot:
+    ;     mov DL, 00
 
-    end: 
-    pop AX
-    pop SI
+    ; end: 
+    ; pop AX
+    ; pop SI
 endm
 
 mImportar macro
