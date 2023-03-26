@@ -187,7 +187,6 @@ mEvaluateGuardarArg1 macro
     isCell:
         jmp end
 
-
     errorEvaluateArg:
         mov DL, 00                          ;; 00 será para marcar error
 
@@ -236,12 +235,19 @@ mIsNumber macro
 
     isNot:
         mov DL, 00h
+        mPrintMsg testStr
+        mWaitEnter
         jmp end
 
     success:
         mov DI, 00
+        xor AX, AX
+        mov BX, offset numberGotten
         generateNumber:
-            mov [numberGotten+DI], [SI]
+            mov AX, [SI]
+            mov [BX + DI], AX
+            inc DI
+            inc SI
             loop generateNumber   
 
     end:
