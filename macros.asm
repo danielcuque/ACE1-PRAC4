@@ -51,33 +51,44 @@ mEvaluatePrompt macro
     push SI
     push DI
 
-    xor CX, CX
-    mov SI, offset keyBoardBuffer
-    inc SI
-    mov CL, [SI]
+    xor CX, CX                                  ;; Limpiamos a CX para establecer el contador
+    mov SI, offset keyBoardBuffer               ;; Cargamos a SI la dirección de memoria del buffer del teclado
+    inc SI                                      ;; Incrementamos a SI para poder acceder a la cantidad de caracteres leídos
+    mov CL, [SI]                                ;; Cargamos ese valor del byte 2 del buffer a CL para el contador
+                                                ;; En este caso cargamos a CX ya que el número no será mayor a 8 bits
 
-    mGetPossibleCommand
+    mGetPossibleCommand                         ;; Verificamos si puede ser un posible comando
+                                                ;; Como en todas las entradas, lo primero que se hace es escribir un comando
+                                                ;; tratanmos de ver si puede ser un comando para optimizar ejecuciones
     
-    cmp wasCommandFound, 00h
-    je commandNotFound
+    cmp wasCommandFound, 00h                    ;; La variable wasCommandFound se carga con 
+                                                ;; 0 == no encontrado, 1 == encontrado
+    je commandNotFound                          ;; Si es 0, inmediatamente nos vamos al final
+
+    inc SI                                      ;; De lo contrario nos posicionamos en el primer caracter del buffer
 
     startEvaluate:
-        mWaitEnter
-        dec CL
-        cmp CX, 00h
-        je endEvaluate
-        jmp startEvaluate
+
+        dec CL                                  ;; Decrementamos a CL para poder terminar el pseudo loop para recorrer el buffer
+        cmp CL, 00h                             ;; Si es 00, entonces nos salimos del loop
+        je endEvaluate                          
+        jmp startEvaluate                       ;; De lo contrario seguimos con el loop
 
     commandNotFound:
         mPrintMsg errorCommand
         mPrintMsg espacio
         mWaitEnter
+
     endEvaluate:
     pop DI
-    pop SI
-    pop DX
-    pop CX
-    pop AX
+        pop SI
+        pop DX
+        pop CX
+        pop AX
+endm
+
+mGetCommand macro 
+    
 endm
 
 mGetPossibleCommand macro
@@ -123,6 +134,7 @@ mGetPossibleCommand macro
 
         cmp AH, 45          ;; Comparo si inicia con E
         je success
+
         jmp end
     success: 
         mov AL, 01h
