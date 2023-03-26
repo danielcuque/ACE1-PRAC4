@@ -35,16 +35,16 @@ mStartProgram macro
     LOCAL startProgram, exitProgram
     startProgram:
         mPrintTable
-        mGetCommand
-        mEvaluateCommand
+        mGetInputKeyboard
+        mEvaluatePrompt
         cmp isRunProgram, 00h
         je startProgram
     exitProgram:
         mExit
 endm
 
-mEvaluateCommand macro
-    LOCAL startEvaluate, endEvaluate
+mEvaluatePrompt macro
+    LOCAL startEvaluate, endEvaluate, commandNotFound
     push AX
     push CX
     push DX
@@ -56,10 +56,22 @@ mEvaluateCommand macro
     inc SI
     mov CL, [SI]
 
-    startEvaluate:
-        
-        loop startEvaluate
+    mGetPossibleCommand
+    
+    cmp wasCommandFound, 00h
+    je commandNotFound
 
+    startEvaluate:
+        mWaitEnter
+        dec CL
+        cmp CX, 00h
+        je endEvaluate
+        jmp startEvaluate
+
+    commandNotFound:
+        mPrintMsg errorCommand
+        mPrintMsg espacio
+        mWaitEnter
     endEvaluate:
     pop DI
     pop SI
@@ -68,9 +80,79 @@ mEvaluateCommand macro
     pop AX
 endm
 
-mCompareStr macro str1, str2
-    LOCAL 
+mGetPossibleCommand macro
+    LOCAL start, end, success
+    push DI
+    push AX
+
+    xor AX, AX
+    mov wasCommandFound, AL
+    mov DI, SI
+    inc DI                  ;; Avanzo al primer caracter
+    start:
+        mov AH, [DI]       
+        cmp AH, 47h         ;; Comparo si inicia con G 
+        je success
+
+        cmp AH, 53          ;; Comparo si inicia con S
+        je success
+
+        cmp AH, 52          ;; Comparo si inicia con R
+        je success
+
+        cmp AH, 04D          ;; Comparo si inicia con M
+        je success
+
+        cmp AH, 44          ;; Comparo si inicia con D
+        je success
+
+        cmp AH, 50          ;; Comparo si inicia con P
+        je success
+
+        cmp AH, 04F          ;; Comparo si inicia con O
+        je success
+
+        cmp AH, 59          ;; Comparo si inicia con Y
+        je success
+
+        cmp AH, 04E          ;; Comparo si inicia con N
+        je success
+
+        cmp AH, 04C          ;; Comparo si inicia con L
+        je success
+
+        cmp AH, 45          ;; Comparo si inicia con E
+        je success
+        jmp end
+    success: 
+        mov AL, 01h
+        mov wasCommandFound, AL
+    end:
+    pop AX
+    pop DI
 endm
+
+mCompareStr macro str1, str2
+    LOCAL startComparation, endComparation
+    push DI
+    push SI
+    push AX
+    push BX
+    startComparation:
+        mov DI, offset str1
+        mov SI, offset str2
+
+        mov AX, 00h
+        mov BX, offset isStringEqual
+        mov [BX], AX
+    
+    endComparation:
+    pop BX
+    pop AX
+    pop SI
+    pop DI
+endm
+
 
 ; ------------------------------------
 mNumToString macro
@@ -252,13 +334,10 @@ mEmptyBuffer macro
     pop SI
 endm
 
-mSkipWhiteSpace macro
-
-endm
 
 ; ------------------------------------
 ; Macro para leer con el teclado y guardarlo en el buffer del teclado
-mGetCommand macro
+mGetInputKeyboard macro
     push DX
     push AX
     push CX

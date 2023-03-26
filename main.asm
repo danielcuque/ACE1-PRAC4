@@ -22,23 +22,23 @@ PORTABCommand DB 'SEPARADOR POR TABULADOR'
 
 ; ------------------------------------
 ; Comandos para operaciones sobre celdas
-GUARDARCommand DB 07,'GUARDAR'
-SUMACommand DB 04,'SUMA'
-RESTACommand DB '05,RESTA'
-MULTIPLICACIONCommand DB 0Eh,'MULTIPLICACION'
-DIVIDIRCommand DB 07,'DIVIDIR'
-POTENCIARCommand DB 09,'POTENCIAR'
-OLOGICOCommand DB 07,'OLOGICO'
-YLOGICOCommand DB 07,'YLOGICO'
-OXLOGICOCommand DB 09,'OXLOGICO'
-NOLOGICOCommand DB 09,'NOLOGICO'
+GUARDARCommand DB 'GUARDAR'
+SUMACommand DB 'SUMA'
+RESTACommand DB 'RESTA'
+MULTIPLICACIONCommand DB 'MULTIPLICACION'
+DIVIDIRCommand DB 'DIVIDIR'
+POTENCIARCommand DB 'POTENCIAR'
+OLOGICOCommand DB 'OLOGICO'
+YLOGICOCommand DB 'YLOGICO'
+OXLOGICOCommand DB 'OXLOGICO'
+NOLOGICOCommand DB 'NOLOGICO'
 ; ------------------------------------
 ; ------------------------------------
 ; Comandos para operaciones sobre rangos
-LLENARCommand DB 06,'LLENAR'
-PROMEDIOCommand DB 08,'PROMEDIO'
-MINIMOCommand DB 06,'MINIMO'
-MAXIMOCommand DB 06,'MAXIMO'
+LLENARCommand DB 'LLENAR'
+PROMEDIOCommand DB 'PROMEDIO'
+MINIMOCommand DB 'MINIMO'
+MAXIMOCommand DB 'MAXIMO'
 ; ------------------------------------
 
 ; ------------------------------------
@@ -56,7 +56,8 @@ infoMsg DB 'Universidad de San Carlos de Guatemala', 0Dh, 0Ah,'Facultad de Ingen
 pressEnterMsg DB 'Presione ENTER para continuar', '$'
 newLine DB 0Dh, 0Ah, '$'
 espacio DB ' ', '$'
-counterToGetIndexGotten DW 0 ;; Esta variable me servirá para poder hacer el corrimiento de SI e insertar el numero donde corresponde
+counterToGetIndexGotten DW 0            ;; Esta variable me servirá para poder hacer el corrimiento de SI e insertar el numero donde corresponde
+returnValue DW 0                     ;; Esta variable se invocará cuando se utilice el caracter *
 ; ------------------------------------
 ; Para las macros
 numberGotten DW ?, '$'
@@ -67,14 +68,24 @@ colName DB 0Dh,'      A      B      C      D      E      F      G      H      I 
 mainTable DW 253 dup(0)
 
 ; ------------------------------------
-; Variables para leer el archivo de entrada
+; Parametros para el comando IMPORTAR
 fileNameBuffer DB 100h dup(0)
 
 ; ------------------------------------
 ; Buffer del teclado
-keyBoardBuffer db 102h dup (0ff, 0)
-colonChar db ': $'
+colonChar DB ': $'
+currentCommand DB 14 dup(0)
 isRunProgram DB 00h
+keyBoardBuffer DB 102h dup (0ff, 0)
+wordRecoveredInBuffer DB ' '
+wasCommandFound DB 00h
+; ------------------------------------
+; Parametros para GUARDAR
+
+guardarParametroNumero DB 7 dup('$')
+guardarParametroCelda DB 2 dup('$')
+
+; ------------------------------------
 ; ------------------------------------
 ; Mensajes de error
 errorCommand DB 'El comando no existe', '$'
