@@ -16,18 +16,18 @@ ALACommand DB 'A LA'
 HASTACommand DB 'HASTA'
 DESDECommand DB 'DESDE'
 HACIACommand DB 'HACIA'
-SALIRCommand DB 'SALIR'
+SALIRCommand DB 05h,'SALIR'
 PORTABCommand DB 'SEPARADOR POR TABULADOR'
 ; ------------------------------------
 
 ; ------------------------------------
 ; Comandos para operaciones sobre celdas
-GUARDARCommand DB 'GUARDAR'
-SUMACommand DB 'SUMA'
-RESTACommand DB 'RESTA'
-MULTIPLICACIONCommand DB 'MULTIPLICACION'
-DIVIDIRCommand DB 'DIVIDIR'
-POTENCIARCommand DB 'POTENCIAR'
+GUARDARCommand DB 07h, 'GUARDAR'
+SUMACommand DB 04h,'SUMA'
+RESTACommand DB 05h,'RESTA'
+MULTIPLICACIONCommand DB 0Eh,'MULTIPLICACION'
+DIVIDIRCommand DB 07h,'DIVIDIR'
+POTENCIARCommand DB 09,'POTENCIAR'
 OLOGICOCommand DB 'OLOGICO'
 YLOGICOCommand DB 'YLOGICO'
 OXLOGICOCommand DB 'OXLOGICO'
@@ -43,9 +43,9 @@ MAXIMOCommand DB 'MAXIMO'
 
 ; ------------------------------------
 ; Comandos para operaciones sobre ficheros
-IMPORTARCommand DB 'IMPORTAR'
-TABULADORCommand DB 09h
+IMPORTARCommand DB 08h,'IMPORTAR'
 EXPORTARCommand DB 'EXPORTAR'
+TABULADORCommand DB 09h
 ; ------------------------------------
 ; Variables para utilizarlas como auxiliares para comparar la evaluacion de comandos
 isStringEqual DB 00h  ;; El estado 0 representa que no son iguales 
@@ -58,6 +58,8 @@ newLine DB 0Dh, 0Ah, '$'
 espacio DB ' ', '$'
 counterToGetIndexGotten DW 0            ;; Esta variable me servirá para poder hacer el corrimiento de SI e insertar el numero donde corresponde
 returnValue DW 0                     ;; Esta variable se invocará cuando se utilice el caracter *
+
+testStr DB 'testeando $'
 ; ------------------------------------
 ; Para las macros
 numberGotten DW ?, '$'
@@ -73,12 +75,12 @@ fileNameBuffer DB 100h dup(0)
 
 ; ------------------------------------
 ; Buffer del teclado
+
 colonChar DB ': $'
 currentCommandId DB 00h
-wordRecovered DB ?, '$'
 isRunProgram DB 00h
 keyBoardBuffer DB 102h dup (0ff, 0)
-wasCommandFound DB 00h
+
 ; ------------------------------------
 ; Parametros para GUARDAR
 

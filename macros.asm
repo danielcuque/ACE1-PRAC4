@@ -61,34 +61,28 @@ mEvaluatePrompt macro
     mov SI, offset keyBoardBuffer               ;; Cargamos a SI la dirección de memoria del buffer del teclado
     inc SI                                      ;; Incrementamos a SI para poder acceder a la cantidad de caracteres leídos
     mov CL, [SI]                                ;; Cargamos ese valor del byte 2 del buffer a CL para el contador
-                                                ;; En este caso cargamos a CX ya que el número no será mayor a 8 bits
+                                                ;; En este caso cargamos a CL ya que el número no será mayor a 8 bits
 
-    mGetPossibleCommand                         ;; Verificamos si puede ser un posible comando
-                                                ;; Como en todas las entradas, lo primero que se hace es escribir un comando
-                                                ;; tratanmos de ver si puede ser un comando para optimizar ejecuciones
-    
-    cmp wasCommandFound, 00h                    ;; La variable wasCommandFound se carga con 
-                                                ;; 0 == no encontrado, 1 == encontrado
-    je commandNotFound                          ;; Si es 0, inmediatamente nos vamos al final
-
-    inc SI                                      ;; De lo contrario nos posicionamos en el primer caracter del buffer
-    mGetRecoverWordFromBuffer                   ;; Recuperamos la primera palabra del buffer para luego usarla para comparar si es un comando
-    mPrintMsg wordRecovered
-    mWaitEnter
-    cmp currentCommandId, 0
+    inc SI                                      ;; Nos colocamos en el primer caracter
+    mSkipWhiteSpace                             ;; Primero verificamos que el buffer no esté vacío
+    cmp DL, 00h                                 ;; Como skipWhiteSpace carga a DL un 00h si está vacio, comparamos
     je commandNotFound
 
-    startEvaluate: 
-        dec CL                                  ;; Decrementamos a CL para poder terminar el pseudo loop para recorrer el buffer
-        cmp CL, 00h                             ;; Si es 00, entonces nos salimos del loop
-        je endEvaluate                          
-        jmp startEvaluate                       ;; De lo contrario seguimos con el loop
+    mov DI, offset SALIRCommand
+    mCompareStr
+    cmp DL, 01
+    je exeSalir
 
     commandNotFound:
         mPrintMsg errorCommand
-        mPrintMsg espacio
+        mPrintMsg newLine
         mWaitEnter
 
+    exeSalir:
+        mPrintMsg colonChar
+        mPrintMsg colonChar
+        mPrintMsg colonChar
+    
     endEvaluate:
         pop SI
         pop DX
@@ -96,101 +90,67 @@ mEvaluatePrompt macro
         pop AX
 endm
 
-;; Este macro recupera la palabra que está en el buffer hasta que encuentra un espacio
-mGetRecoverWordFromBuffer macro
-    LOCAL start, end
-    push AX 
-    push DI
 
-    xor AX, AX                      ;; Limpiamos a AX
-    mov DI, 0                       ;; Inicializamos a DI en 0 para que empiece en la posicion 0 de la cadena a modificar
-    start:  
-        mov AH, [SI]                ;; Movemos el valor que se encuentra en la direccion SI a AH
-        cmp AH, ' '                 ;; Si es un espacio, significa que la palabra finalizó y no movemos más a SI
-        je end 
-        mov wordRecovered[DI], AH   ;; De lo contrario, tomamos el valor de AH y se lo metemos a la palabra recuperada
-        inc SI                      ;; Incrementamos a SI para poder avanzar en el buffer
-        inc DI                      ;; Incrementamos a DI para poder avanzar en la cadena
-        dec CX                      ;; Decrementamos a CX para poder llevar el registro a evaluar en el otro macros
-        jmp start
-    end:
-        pop DI
-        pop AX
-endm
+;; Este macro avanza el macro hasta encontrar una palabra
+;; SI es la posicion del buffer
+;; DL es 00 si se terminó el buffer
+mSkipWhiteSpace macro
+    LOCAL start, goWord, isWord, endBuffer
+    mov DX, offset keyBoardBuffer
+    add DX, 102h
 
-
-mGetPossibleCommand macro
-    LOCAL start, end, success
-    push DI
-    push AX
-
-    xor AX, AX
-    mov wasCommandFound, AL
-    mov DI, SI
-    inc DI                  ;; Avanzo al primer caracter
     start:
-        mov AH, [DI]       
-        cmp AH, 47h         ;; Comparo si inicia con G 
-        je success
+        mov AL, [SI]
 
-        cmp AH, 53          ;; Comparo si inicia con S
-        je success
+        cmp AL, 20h
+        je goWord
 
-        cmp AH, 52          ;; Comparo si inicia con R
-        je success
+        cmp AL, 0Dh
+        je goWord
 
-        cmp AH, 04D          ;; Comparo si inicia con M
-        je success
-
-        cmp AH, 44          ;; Comparo si inicia con D
-        je success
-
-        cmp AH, 50          ;; Comparo si inicia con P
-        je success
-
-        cmp AH, 04F          ;; Comparo si inicia con O
-        je success
-
-        cmp AH, 59          ;; Comparo si inicia con Y
-        je success
-
-        cmp AH, 04E          ;; Comparo si inicia con N
-        je success
-
-        cmp AH, 04C          ;; Comparo si inicia con L
-        je success
-
-        cmp AH, 45          ;; Comparo si inicia con E
-        je success
-
-        jmp end
-    success: 
-        mov AL, 01h
-        mov wasCommandFound, AL
-    end:
-    pop AX
-    pop DI
+        cmp AL, 00h
+        je endBuffer
+        jmp isWord
+        
+    goWord:
+        inc SI
+        cmp SI, DX
+        jae endBuffer
+        jmp start
+    endBuffer:
+        mov DL, 00h
+        jmp endSkip
+    isWord:
+        mov DL, 01h
+    endSkip:
 endm
 
-mCompareStr macro str1, str2
-    LOCAL startComparation, endComparation
-    push DI
-    push SI
-    push AX
-    push BX
-    startComparation:
-        mov DI, offset str1
-        mov SI, offset str2
+;; Este macro necesita un valor en SI y DI
+;; SI el offset de la cadena A, la cadena apunta al tamaño de la misma
+;; DI al offset de la cadena B que se quiere comparar con A
+;; CX guarda el tamaño de una de las cadenas
+;; DL guarda si son iguales
+;; DL == 0 si no son iguales
+;; DL == 1 si sí son iguales
+mCompareStr macro
+    LOCAL compareLoop, equal, notEqual, endCompare
+    push CX
 
-        mov AX, 00h
-        mov BX, offset isStringEqual
-        mov [BX], AX
-    
-    endComparation:
-    pop BX
-    pop AX
-    pop SI
-    pop DI
+    mov CH, 00      
+    mov CL, [DI]
+    inc DI
+
+    compareLoop:
+        cmpsb
+        jne notEqual
+        loop compareLoop
+        mov DL, 01h
+        jmp endCompare
+    notEqual:
+
+        mov DL, 00h
+    endCompare:
+    pop CX
 endm
 
 
