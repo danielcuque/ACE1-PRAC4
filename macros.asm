@@ -53,40 +53,43 @@ endm
 mEvaluatePrompt macro
     LOCAL startEvaluate, endEvaluate, commandNotFound
     push AX
-    push CX
     push DX
     push SI
 
-    xor CX, CX                                  ;; Limpiamos a CX para establecer el contador
     mov SI, offset keyBoardBuffer               ;; Cargamos a SI la dirección de memoria del buffer del teclado
-    inc SI                                      ;; Incrementamos a SI para poder acceder a la cantidad de caracteres leídos
-    mov CL, [SI]                                ;; Cargamos ese valor del byte 2 del buffer a CL para el contador
-                                                ;; En este caso cargamos a CL ya que el número no será mayor a 8 bits
+    add SI, 02h
 
-    inc SI                                      ;; Nos colocamos en el primer caracter
     mSkipWhiteSpace                             ;; Primero verificamos que el buffer no esté vacío
     cmp DL, 00h                                 ;; Como skipWhiteSpace carga a DL un 00h si está vacio, comparamos
     je commandNotFound
 
     mov DI, offset SALIRCommand
     mCompareStr
-    cmp DL, 01
-    je exeSalir
+    cmp DL, 00
+    jne exeSalir
 
+    mov SI, offset keyBoardBuffer
+    mov DI, offset GUARDARCommand
+    mCompareStr
+    cmp DL, 00
+    jne exeGuardar
+
+
+    jmp commandNotFound
+
+    exeSalir:
+        mExit
+    exeGuardar:
+
+    
     commandNotFound:
         mPrintMsg errorCommand
         mPrintMsg newLine
         mWaitEnter
-
-    exeSalir:
-        mPrintMsg colonChar
-        mPrintMsg colonChar
-        mPrintMsg colonChar
     
     endEvaluate:
         pop SI
         pop DX
-        pop CX
         pop AX
 endm
 
@@ -134,23 +137,26 @@ endm
 ;; DL == 1 si sí son iguales
 mCompareStr macro
     LOCAL compareLoop, equal, notEqual, endCompare
-    push CX
+    push AX
+    push BX
 
-    mov CH, 00      
-    mov CL, [DI]
+    mov DX, 00h       
+    mov CX, DI
     inc DI
-
     compareLoop:
-        cmpsb
-        jne notEqual
+        mov AL, [DI]
+        mov BL, [SI]
+        cmp AL, BL
+        jne endCompare
+        inc DI
+        inc SI
         loop compareLoop
-        mov DL, 01h
-        jmp endCompare
-    notEqual:
+    
+    mov DL, 01
 
-        mov DL, 00h
     endCompare:
-    pop CX
+    pop BX
+    pop AX
 endm
 
 
