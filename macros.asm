@@ -80,6 +80,8 @@ mEvaluatePrompt macro
     exeSalir:
         mExit
     exeGuardar:
+        mPrintMsg testStr
+        jmp endEvaluate
 
     
     commandNotFound:
@@ -141,7 +143,7 @@ mCompareStr macro
     push BX
 
     mov DX, 00h       
-    mov CX, DI
+    mov CL, [DI]
     inc DI
     compareLoop:
         mov AL, [DI]
