@@ -16,39 +16,37 @@ ALACommand DB 'A LA'
 HASTACommand DB 'HASTA'
 DESDECommand DB 'DESDE'
 HACIACommand DB 'HACIA'
-SALIRCommand DB 05h,'SALIR'
+SALIRCommand DB 05h, 'SALIR'
 PORTABCommand DB 'SEPARADOR POR TABULADOR'
 ; ------------------------------------
 
 ; ------------------------------------
 ; Comandos para operaciones sobre celdas
-GUARDARCommand DB 07h, 'GUARDAR'
+GUARDARCommand DB 07h, 'GUARDAR', '$'
 SUMACommand DB 04h,'SUMA'
 RESTACommand DB 05h,'RESTA'
 MULTIPLICACIONCommand DB 0Eh,'MULTIPLICACION'
 DIVIDIRCommand DB 07h,'DIVIDIR'
 POTENCIARCommand DB 09,'POTENCIAR'
-OLOGICOCommand DB 'OLOGICO'
-YLOGICOCommand DB 'YLOGICO'
-OXLOGICOCommand DB 'OXLOGICO'
-NOLOGICOCommand DB 'NOLOGICO'
+OLOGICOCommand DB 07h,'OLOGICO'
+YLOGICOCommand DB 07h,'YLOGICO'
+OXLOGICOCommand DB 08h,'OXLOGICO'
+NOLOGICOCommand DB 08h,'NOLOGICO'
 ; ------------------------------------
 ; ------------------------------------
 ; Comandos para operaciones sobre rangos
-LLENARCommand DB 'LLENAR'
-PROMEDIOCommand DB 'PROMEDIO'
-MINIMOCommand DB 'MINIMO'
-MAXIMOCommand DB 'MAXIMO'
+LLENARCommand DB 06h,'LLENAR'
+PROMEDIOCommand DB 08h,'PROMEDIO'
+MINIMOCommand DB 06h,'MINIMO'
+MAXIMOCommand DB 06h,'MAXIMO'
 ; ------------------------------------
 
 ; ------------------------------------
 ; Comandos para operaciones sobre ficheros
 IMPORTARCommand DB 08h,'IMPORTAR'
-EXPORTARCommand DB 'EXPORTAR'
+EXPORTARCommand DB 08h,'EXPORTAR'
 TABULADORCommand DB 09h
 ; ------------------------------------
-; Variables para utilizarlas como auxiliares para comparar la evaluacion de comandos
-isStringEqual DB 00h  ;; El estado 0 representa que no son iguales 
 
 ; ------------------------------------
 ; Variables extra
@@ -91,6 +89,8 @@ guardarParametroCelda DB 2 dup('$')
 ; ------------------------------------
 ; Mensajes de error
 errorCommand DB 'El comando no existe', '$'
+errorArgsStr DB 'Faltan argumentos en la función ' , '$'
+errrorValueArgs DB 'Valores incorrectos' , '$'
 ; ------------------------------------
 
 .CODE

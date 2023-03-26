@@ -53,6 +53,7 @@ endm
 mEvaluatePrompt macro
     LOCAL startEvaluate, endEvaluate, commandNotFound
     push AX
+    push CX
     push DX
     push SI
 
@@ -68,21 +69,43 @@ mEvaluatePrompt macro
     cmp DL, 00
     jne exeSalir
 
-    mov SI, offset keyBoardBuffer
-    mov DI, offset GUARDARCommand
-    mCompareStr
+
+    mCompareCommand GUARDARCommand
     cmp DL, 00
     jne exeGuardar
 
+    mCompareCommand IMPORTARCommand
+    cmp DL, 00
+    jne exeImportar
+
+    mCompareCommand SUMACommand
+    cmp DL, 00
+    jne exeGuardar
+
+    mCompareCommand RESTACommand
+    cmp DL, 00
+    jne exeGuardar
+
+    mCompareCommand MULTIPLICACIONCommand
+    cmp DL, 00
+    jne exeGuardar
 
     jmp commandNotFound
 
     exeSalir:
         mExit
-    exeGuardar:
-        mPrintMsg testStr
+
+    exeGuardar:                                     ;; Aquí podemos recibir un número o una celda
+        mGuardar
         jmp endEvaluate
 
+    exeSuma:
+        mSuma
+        jmp endEvaluate
+    
+    exeImportar:
+        mImportar
+        jmp endEvaluate
     
     commandNotFound:
         mPrintMsg errorCommand
@@ -92,7 +115,40 @@ mEvaluatePrompt macro
     endEvaluate:
         pop SI
         pop DX
+        pop CX
         pop AX
+endm
+
+mGuardar macro
+    LOCAL startGuardar, errorArgs, endEvaluate
+    add SI, 07
+    mSkipWhiteSpace
+    cmp DL, 00h
+    je errorArgs
+
+    startGuardar:
+        jmp endEvaluate
+
+
+    errorArgs:
+        mPrintMsg errorArgsStr
+        mPrintMsg GUARDARCommand
+        mPrintMsg newLine
+        mWaitEnter
+    endEvaluate:
+endm
+
+mCompareCommand macro commandStr
+    mov DI, offset commandStr
+    mCompareStr
+endm
+
+mImportar macro
+    mPrintMsg testStr
+endm
+
+mSuma macro
+
 endm
 
 
@@ -100,7 +156,7 @@ endm
 ;; SI es la posicion del buffer
 ;; DL es 00 si se terminó el buffer
 mSkipWhiteSpace macro
-    LOCAL start, goWord, isWord, endBuffer
+    LOCAL start, goWord, isWord, endBuffer, endSkip
     mov DX, offset keyBoardBuffer
     add DX, 102h
 
@@ -141,6 +197,8 @@ mCompareStr macro
     LOCAL compareLoop, equal, notEqual, endCompare
     push AX
     push BX
+    push SI
+    push DI
 
     mov DX, 00h       
     mov CL, [DI]
@@ -157,6 +215,8 @@ mCompareStr macro
     mov DL, 01
 
     endCompare:
+    pop DI
+    pop SI
     pop BX
     pop AX
 endm
