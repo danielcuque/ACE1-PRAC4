@@ -214,29 +214,33 @@ mIsNumber macro
     push CX
     push DI
                 
-    mov CX, 00      ;; Este llevara el control de cuantas posiciones aumentar en SI en caso de que sí sea necesario
-    mov BX, SI      ;; Copiamos la direccion de memoria de SI para no modificar SI si no es necesario
-    mov DL, 01h     ;; Cargamos en un inicio a DL con 01 para indicar que es verdadero
+    mov CX, 00              ;; Este llevara el control de cuantas posiciones aumentar en SI en caso de que sí sea necesario
+    mov BX, SI              ;; Copiamos la direccion de memoria de SI para no modificar SI si no es necesario
+    mov DL, 01h             ;; Cargamos en un inicio a DL con 01 para indicar que es verdadero
     start:
+        inc BX
         mov AL, [BX]
-        
-        cmp AL, 30h
+    
+        cmp AL, 20h         ;; Si llegamos al espacio y todo está correcto, entonces generamos el numero
+        je success
+
+        cmp AL, 00          ;; Comparamos que si es caracter nulo, llegamos al final
+        je success
+
+        cmp AL, 0Dh         ;; O comparamos que no sea un valor de retorno
+        je success
+ 
+        cmp AL, 30h         ;; Comparamos que el ASCII no sea menor al ASCII DE 1
         jb isNot
 
-        cmp AL, 39h
+        cmp AL, 39h         ;; Comparamos que el ASCII no sea mayor al ASCII de 9
         ja isNot
 
-        cmp AL, 20h    ;; Si llegamos al espacio y todo está correcto, entonces generamos el numero
-        je success 
-
         inc CX
-        inc BX
         jmp start
 
     isNot:
         mov DL, 00h
-        mPrintMsg testStr
-        mWaitEnter
         jmp end
 
     success:
