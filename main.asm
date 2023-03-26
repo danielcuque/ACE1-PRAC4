@@ -74,10 +74,10 @@ fileNameBuffer DB 100h dup(0)
 ; ------------------------------------
 ; Buffer del teclado
 colonChar DB ': $'
-currentCommand DB 14 dup(0)
+currentCommandId DB 00h
+wordRecovered DB ?, '$'
 isRunProgram DB 00h
 keyBoardBuffer DB 102h dup (0ff, 0)
-wordRecoveredInBuffer DB ' '
 wasCommandFound DB 00h
 ; ------------------------------------
 ; Parametros para GUARDAR

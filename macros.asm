@@ -14,9 +14,15 @@ mPrintMsg macro str
 endm
 
 mPrintPartialDirection macro str
+    push AX
+    push DX
+
     mov DX, str
     mov AH, 09h
     int 21h
+
+    pop AX
+    pop DX
 endm
 
 ; ------------------------------------
@@ -40,6 +46,7 @@ mStartProgram macro
         cmp isRunProgram, 00h
         je startProgram
     exitProgram:
+        mPrintMsg colonChar
         mExit
 endm
 
@@ -49,7 +56,6 @@ mEvaluatePrompt macro
     push CX
     push DX
     push SI
-    push DI
 
     xor CX, CX                                  ;; Limpiamos a CX para establecer el contador
     mov SI, offset keyBoardBuffer               ;; Cargamos a SI la dirección de memoria del buffer del teclado
@@ -66,9 +72,13 @@ mEvaluatePrompt macro
     je commandNotFound                          ;; Si es 0, inmediatamente nos vamos al final
 
     inc SI                                      ;; De lo contrario nos posicionamos en el primer caracter del buffer
+    mGetRecoverWordFromBuffer                   ;; Recuperamos la primera palabra del buffer para luego usarla para comparar si es un comando
+    mPrintMsg wordRecovered
+    mWaitEnter
+    cmp currentCommandId, 0
+    je commandNotFound
 
-    startEvaluate:
-
+    startEvaluate: 
         dec CL                                  ;; Decrementamos a CL para poder terminar el pseudo loop para recorrer el buffer
         cmp CL, 00h                             ;; Si es 00, entonces nos salimos del loop
         je endEvaluate                          
@@ -80,16 +90,34 @@ mEvaluatePrompt macro
         mWaitEnter
 
     endEvaluate:
-    pop DI
         pop SI
         pop DX
         pop CX
         pop AX
 endm
 
-mGetCommand macro 
-    
+;; Este macro recupera la palabra que está en el buffer hasta que encuentra un espacio
+mGetRecoverWordFromBuffer macro
+    LOCAL start, end
+    push AX 
+    push DI
+
+    xor AX, AX                      ;; Limpiamos a AX
+    mov DI, 0                       ;; Inicializamos a DI en 0 para que empiece en la posicion 0 de la cadena a modificar
+    start:  
+        mov AH, [SI]                ;; Movemos el valor que se encuentra en la direccion SI a AH
+        cmp AH, ' '                 ;; Si es un espacio, significa que la palabra finalizó y no movemos más a SI
+        je end 
+        mov wordRecovered[DI], AH   ;; De lo contrario, tomamos el valor de AH y se lo metemos a la palabra recuperada
+        inc SI                      ;; Incrementamos a SI para poder avanzar en el buffer
+        inc DI                      ;; Incrementamos a DI para poder avanzar en la cadena
+        dec CX                      ;; Decrementamos a CX para poder llevar el registro a evaluar en el otro macros
+        jmp start
+    end:
+        pop DI
+        pop AX
 endm
+
 
 mGetPossibleCommand macro
     LOCAL start, end, success
