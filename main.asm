@@ -55,7 +55,7 @@ pressEnterMsg DB 'Presione ENTER para continuar', '$'
 newLine DB 0Dh, 0Ah, '$'
 espacio DB ' ', '$'
 counterToGetIndexGotten DW 0            ;; Esta variable me servirá para poder hacer el corrimiento de SI e insertar el numero donde corresponde
-returnValue DW 0                     ;; Esta variable se invocará cuando se utilice el caracter *
+returnValue DW 0                        ;; Esta variable se invocará cuando se utilice el caracter *
 
 testStr DB 'testeando $'
 ; ------------------------------------
@@ -82,8 +82,8 @@ keyBoardBuffer DB 102h dup (0ff, 0)
 ; ------------------------------------
 ; Parametros para GUARDAR
 
-guardarParametroNumero DB 7 dup('$')
-guardarParametroCelda DB 2 dup('$')
+guardarParametroNumero DW 7 dup('$')
+guardarParametroCelda DW 2 dup('$')
 
 ; ------------------------------------
 ; ------------------------------------

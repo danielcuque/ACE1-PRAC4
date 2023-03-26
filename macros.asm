@@ -96,8 +96,8 @@ mEvaluatePrompt macro
         mExit
 
     exeGuardar:                                     ;; Aquí podemos recibir un número o una celda
-        mGuardar
-        jmp endEvaluate
+        mGuardar                                    ;; Ejecutamos un macro que nos ayuda a hacer la función de Guardar
+        jmp endEvaluate                             ;; Lo devolvemos al inicio si ya se terminó el macro
 
     exeSuma:
         mSuma
@@ -121,14 +121,18 @@ endm
 
 mGuardar macro
     LOCAL startGuardar, errorArgs, endEvaluate
-    add SI, 07
-    mSkipWhiteSpace
-    cmp DL, 00h
-    je errorArgs
 
+    add SI, 07                      ;; Le sumamos a la posición del buffer, el tamaño de la cadena
+    mSkipWhiteSpace                 ;; Avanzamos a la siguiente palabra
+    cmp DL, 00h                     ;; Mostramos mensaje de error si es el caso
+    je errorArgs            
+
+    ;; Para este punto, el punto SI, está posicionado 
     startGuardar:
+        mEvaluateGuardarArg1
+        cmp DL, 00
+        je errorArgs
         jmp endEvaluate
-
 
     errorArgs:
         mPrintMsg errorArgsStr
@@ -138,9 +142,88 @@ mGuardar macro
     endEvaluate:
 endm
 
+mEvaluateGuardarArg1 macro
+    LOCAL start, isAsterisk, isNumber, isCell, errorEvaluateArg, end
+    push AX
+    push BX
+    push DI
+
+    xor AX, AX
+    xor BX, BX
+    mov DL, 01
+
+    mov AX, [SI]
+    mov DI, offset returnValue
+    start:
+        cmp AL, 02Ah
+        je isAsterisk
+
+        mIsNumber
+        cmp DL, 00
+        jne isNumber
+
+        mIsCell
+        cmp DL, 00
+        jne isCell
+    
+    isAsterisk:
+        mov BX, [DI]
+        mov [guardarParametroNumero], BX
+        mPrintMsg guardarParametroNumero
+        mWaitEnter
+        jmp end 
+    
+    isNumber:
+
+        jmp end
+
+    
+    isCell:
+        jmp end
+
+
+    errorEvaluateArg:
+        mov DL, 00                  ;; 00 será para marcar error
+
+    end:
+    push DI
+    pop BX
+    pop AX
+endm
+
 mCompareCommand macro commandStr
     mov DI, offset commandStr
     mCompareStr
+endm
+
+
+
+mIsNumber macro
+    LOCAL isNot, end
+    push AX
+    push CX
+
+    end:
+    pop CX
+    pop AX
+endm
+
+mIsCell macro
+    push SI
+    push AX
+    
+    xor AX, AX
+    mov DL, 01
+    mov AL, [SI]
+    cmp AL, 
+
+    jmp end
+    isNot:
+        mov DL, 00
+
+    end: 
+    pop AX
+    pop SI
 endm
 
 mImportar macro
@@ -155,34 +238,37 @@ endm
 ;; Este macro avanza el macro hasta encontrar una palabra
 ;; SI es la posicion del buffer
 ;; DL es 00 si se terminó el buffer
+;; DL es 01 si es una palabra
+;; Si el buffer encuentra una palabra, deja posicionado a SI en la direccion que tiene el caracter
+
 mSkipWhiteSpace macro
     LOCAL start, goWord, isWord, endBuffer, endSkip
     mov DX, offset keyBoardBuffer
     add DX, 102h
 
     start:
-        mov AL, [SI]
+        mov AL, [SI]                ;; Copiamos el valor que se encuentra en SI para comparar
 
-        cmp AL, 20h
+        cmp AL, 20h                 ;; Si el caracter es un ESPACIO entonces seguimos recorriendo
         je goWord
 
-        cmp AL, 0Dh
+        cmp AL, 0Dh                 ;; Si el caracter es un CR entonces seguimos recorriendo
         je goWord
 
-        cmp AL, 00h
-        je endBuffer
-        jmp isWord
+        cmp AL, 00h                 ;; Si el caracter es nulo, entonces significa que el buffer acabó
+        je endBuffer                
+        jmp isWord                  ;; Si el indice SI no es ninguno, entonces significa que es una palabra
         
     goWord:
-        inc SI
-        cmp SI, DX
-        jae endBuffer
-        jmp start
+        inc SI                      ;; Incrementamos SI para poder seguir a la siguiente posición y dejar posicionado en SI el caracter diferente de nulo
+        cmp SI, DX                  ;; Si el puntero SI tiene el tamaño de 256, significa que llegamos al final del buffer
+        jae endBuffer               
+        jmp start                   ;; De lo contrario, seguimos iterando
     endBuffer:
-        mov DL, 00h
-        jmp endSkip
-    isWord:
-        mov DL, 01h
+        mov DL, 00h                 ;; Carga 00h para indicar que el buffer se terminó
+        jmp endSkip         
+    isWord: 
+        mov DL, 01h                 ;; Si es un caracter, entonces DL es 01
     endSkip:
 endm
 
