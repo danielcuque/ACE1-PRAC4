@@ -72,7 +72,7 @@ fileNameBuffer DB 100h dup(0)
 
 ; ------------------------------------
 ; Buffer del teclado
-keyBoardBuffer db 100h dup (0ff,0)
+keyBoardBuffer db 100h dup (0ff,'$')
 colonChar db ': $'
 isRunProgram DB 00h
 ; ------------------------------------

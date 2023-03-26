@@ -44,14 +44,27 @@ mStartProgram macro
 endm
 
 mEvaluateCommand macro
-    LOCAL startEvaluate
-    push CX
+    LOCAL startEvaluate, endEvaluate
     push AX
-    xor CX, CX
+    push CX
+    push DX
+    push SI
+    push DI
+
     mov SI, offset keyBoardBuffer
-    add SI, 02h
-    pop AX
+    inc SI
+    mov CX, [SI]
+
+    startEvaluate:
+        mPrintMsg colonChar
+        loop startEvaluate
+
+    endEvaluate:
+    pop DI
+    pop SI
+    pop DX
     pop CX
+    pop AX
 endm
 
 mCompareStr macro str1, str2
@@ -168,22 +181,27 @@ mPrintTable macro
 
     mPrintMsg colName
 
-    mov SI, offset mainTable             ;; Obtenemos la direccion de memoria del tablero
-    mov BX, 01h                         ;; Colocamos en 0 a BX para llevar el registro del numero de filas
+    mov SI, offset mainTable                ;; Obtenemos la direccion de memoria del tablero
+    mov BX, 01h                             ;; Colocamos en 0 a BX para llevar el registro del numero de filas
 
-    mov CX, 17h                         ;; Colocamos en CX el numero de filas
+    mov CX, 17h                             ;; Colocamos en CX el numero de filas
 
     printRows:
-        mov numberGotten, BX                  ;; Cargamos a numberGotten con el registro contador, en este caso es BX
-        mNumToString                    ;; Usamos el macro para convertir el número que se almacenó en numberGotten y covertilo a str
-        mPrintPartialDirection offset recoveredStr[04h]       ;; Le mandamos esa dirección de memoria a la macro
+        mov numberGotten, BX                ;; Cargamos a numberGotten con el registro contador, en este caso es BX
+        mNumToString                        ;; Usamos el macro para convertir el número que se almacenó en numberGotten y covertilo a str
+        
+        push DX
+        mov DX, offset recoveredStr
+        add DX, 04h
+        mPrintPartialDirection DX       ;; Le mandamos esa dirección de memoria a la macro
         mPrintMsg espacio               ;; Le damos un espacio para separarlo de la cuadricula
+        pop DX
 
         push CX                         ;; Protegemos nuestro registro CX que guarda el contador para imprimir las filas
         mov CX, 0Bh                     ;; Lo inicializamos en B = 11 dec  para imprimir las columnas
         printCols:
-            mov DI, offset numberGotten
-            mov DX, [SI]
+            mov DI, offset numberGotten ;; Movemos la direccion de memoria del numero obtenido
+            mov DX, [SI]                ;; Le cargamos a DX el valor de la posición del tablero
             mov [DI], DL                ;; Movemos el valor que se encuentra en la posición DI del arreglo 
             mPrintNumberConverted       ;; Imprimimos el valor de la celda
             add SI, 02h                 ;; Al ser una DW, es necesario avanzar 2 bytes
@@ -219,10 +237,9 @@ mEmptyBuffer macro
     mov SI, offset keyBoardBuffer
     inc SI
 
-    mov AL, 00h
+    mov AL, 24h
 
-    mov CX, 100h
-    sub CX, 01h
+    mov CX, 0FFh
 
     emptyBuffer:
         mov [SI], AL
@@ -243,21 +260,17 @@ endm
 mGetCommand macro
     push DX
     push AX
-    push SI
     push CX
 
     mEmptyBuffer
 
-    mov DX, offset colonChar
-    mov AH, 09h
-    int 21h
+    mPrintMsg colonChar
 
     mov DX, offset keyBoardBuffer
     mov AH, 0Ah
     int 21h
 
     pop CX
-    pop SI
     pop AX
     pop DX
 endm
