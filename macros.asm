@@ -52,12 +52,14 @@ mEvaluateCommand macro
     push DI
 
     mov SI, offset keyBoardBuffer
-    inc SI
+    add SI, 02h
     mov CX, [SI]
-
-    startEvaluate:
-        mPrintMsg colonChar
-        loop startEvaluate
+    mov numberGotten, CX
+    mPrintNumberConverted
+    mWaitEnter
+    ; startEvaluate:
+    ;     mPrintMsg colonChar
+    ;     loop startEvaluate
 
     endEvaluate:
     pop DI
@@ -214,7 +216,7 @@ mPrintTable macro
             jne printRows               ;; Regresamos a imprimir una nueva fila
     
     ;; Regresamos a su estado original los registros
-    push SI
+    pop SI
     pop DI
     pop DX
     pop CX
@@ -235,11 +237,11 @@ mEmptyBuffer macro
     push AX
 
     mov SI, offset keyBoardBuffer
-    inc SI
+    mov CL, [SI]
+    mov CH, 00
+    add SI, 02
 
-    mov AL, 24h
-
-    mov CX, 0FFh
+    mov AL, 00
 
     emptyBuffer:
         mov [SI], AL
