@@ -477,7 +477,6 @@ mImportar macro
         jmp readFileName
 
     start:
-                                        ;; Obtenemos el nombre del archivo
         
         mReadFile                       ;; Cargamos la información del archivo al buffer
         cmp DL, 00
@@ -524,7 +523,6 @@ mReadFile macro
     push AX
     push BX
     push CX
-    push DX
 
     xor AX, AX
 
@@ -536,24 +534,30 @@ mReadFile macro
     int 21h
 
     jc fail
-    mov [fileHandler], AX
+    mov [fileHandler], AX       ;; Cargamos la información del Handler de AX a una variable en memoria
 
-    mReadHeadersCsv
-
-    mov AH, 3Eh
-    mov BX, [fileHandler]
-    int 21h
-    jc fail
+    mReadHeadersCsv             ;; Leemos los headers
+    cmp DL, 00                  ;; Si devuelve error, entonces no continuamos
+    je errorHeaders
 
     ;; En esta sección ya podemos usar la info cargada al buffer
         mov DL, 01
         jmp end
     fail:
-        mPrintMsg errorFileNotFound
+        mPrintMsg errorFileNotFound     ;; Si no encontramos el archivo, lanzamos una alerta
         mov DL, 00
 
-    end:
-    pop DX
+    errorHeaders:
+        mPrintMsg errorHeadersStr       ;; Mostramos error de ingreso de columnas
+        mov DL, 00   
+        jc fail
+               
+    end:                                ;; Independientemente de lo que pase, debemos cerrar el archivo
+        mov AH, 3Eh                     ;; Cargamos a AH para hacer la interrupción de cerrar archivo
+        mov BX, [fileHandler]            
+        int 21h
+
+    
     pop CX
     pop BX
     pop AX
@@ -589,7 +593,6 @@ mReadHeadersCsv macro
         je changeChar
 
         jmp continue
-        
 
         changeChar:
             mov AL, 024h
@@ -614,10 +617,10 @@ mReadHeadersCsv macro
 
             lea BX, bufferColumnsPosition
             lea DI, colValueIndex
-            add BX, [DI]
+            add BX, DI
 
             lea DI, colValue
-            mov BX, [DI]
+            mov [BX], DI
 
             pop BX
             pop DI
@@ -654,7 +657,6 @@ endm
 ;; DL == 1, es correcta
 mRequestColumn macro
     LOCAL start, fail, success, end
-    push DX
     push AX
     push CX
     push SI
@@ -677,14 +679,13 @@ mRequestColumn macro
     success:
         mov DL, 01
         jmp end
-
     fail:
         mov DL, 00
     end:
     pop SI
     pop CX
     pop AX
-    pop DX
+
 endm
 
 mPrintOneChar macro char

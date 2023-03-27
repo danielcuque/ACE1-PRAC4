@@ -106,6 +106,7 @@ errorArgsStr DB 'Faltan argumentos en la funcion $'
 errrorValueArgs DB 'Valores incorrectos $' 
 errorFileNotFound DB 'No se pudo encontrar el archivo $'
 errorSizeOfNumber DB 'Numero demasiado grande $'
+errorHeadersStr DB 'Columna Incorrecta $'
 ; ------------------------------------
 
 .CODE
