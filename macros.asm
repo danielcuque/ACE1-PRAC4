@@ -29,7 +29,7 @@ endm
 mWaitEnter macro
     LOCAL wait_enter
     wait_enter:
-        mPrintMsg pressEnterMsg
+        ; mPrintMsg pressEnterMsg
         mov AH, 08h
         int 21
         cmp AL, 0Dh
@@ -547,7 +547,6 @@ mReadFile macro
 
     ;; En esta sección ya podemos usar la info cargada al buffer
         mov DL, 01
-        mWaitEnter
         jmp end
     fail:
         mPrintMsg errorFileNotFound
@@ -605,8 +604,8 @@ mReadHeadersCsv macro
         showHeader:
             mPrintMsg letraColumna
             mPrintPartialDirection DI
-            mWaitEnter
             mPrintMsg newLine
+            mWaitEnter
 
         advanceChar:
             mov AL, [DI]
