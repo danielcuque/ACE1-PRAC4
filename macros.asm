@@ -182,6 +182,7 @@ mEvaluateGuardarArg1 macro
         jmp end 
     
     isNumber:
+        mPrintMsg recoveredStr
         mWaitEnter
         jmp end
     
@@ -219,13 +220,14 @@ mIsNumber macro
     mov BX, SI              ;; Copiamos la direccion de memoria de SI para no modificar SI si no es necesario
     mov DL, 01h             ;; Cargamos en un inicio a DL con 01 para indicar que es verdadero
     start:
-        inc BX
+        
+        mWaitEnter
         mov AL, [BX]
     
         cmp AL, 20h         ;; Si llegamos al espacio y todo está correcto, entonces generamos el numero
         je success
 
-        cmp AL, 00          ;; Comparamos que si es caracter nulo, llegamos al final
+        cmp AL, 00h          ;; Comparamos que si es caracter nulo, llegamos al final
         je success
 
         cmp AL, 0Dh         ;; O comparamos que no sea un valor de retorno
@@ -237,34 +239,59 @@ mIsNumber macro
         cmp AL, 39h         ;; Comparamos que el ASCII no sea mayor al ASCII de 9
         ja isNot
 
+        inc BX
         inc CX              ;; Incrementamos CX para poder hacer un loop y guardar el número recuperado en formato string
         jmp start
 
     isNot:
-        mov DL, 00h
+        mov DL, 00h         ;; Si no es número, entonces seteamos a DL como 0 y lo retornarmos
         jmp end
 
     success:
-        mov DI, 00
-        xor AX, AX
-        mov BX, offset recoveredNumber
-        cmp CX, 05h
-        jl generateNumber
+        xor AX, AX                          ;; Limpiamos a AX
+        mov BX, offset recoveredStr      ;; Movemos la direccion de memoria del número a recuperar para insertarle datos
+        
+        cmp CX, 07h                         ;; Si el número es mayor a 5, significa que no es válido
+        jl generateNumber                   ;; Si es menor a 5, entonces recuperamos el número
 
-        mPrintMsg errorSizeOfNumber
+        mPrintMsg errorSizeOfNumber         ;; si no es válido, lo devolvemos a isNot    
         jmp isNot
-
+        
         generateNumber:
-            mov AX, [SI]
-            mov [BX + DI], AX
-            inc DI
-            inc SI
-            loop generateNumber   
+            mResetrecoveredStr
+
+            createNumber:
+            mov AL, [SI]                    ;; Movemos el valor que se encuentra en SI a AX, por ejemplo, si en Si está 1, entonces lo movemos
+            mov [BX], AL                    ;; Le insertamos ese valor a la variable de recoveredStr
+            inc BX                          ;; Incrementamos DI
+            inc SI                          ;; Incrementamos SI, para avanzar en el buffer
+            loop createNumber               ;; Ciclamos
     end:
     pop DI
     pop CX
     pop BX
     pop AX
+endm
+
+mResetrecoveredStr macro
+    LOCAL start
+    push CX
+    push BX
+    push AX
+
+    xor CX, CX
+    mov CL, 07
+    mov BX, offset recoveredStr
+    mov AL, 024h
+
+    start:
+        mov [BX], AL
+        inc BX
+    loop start
+
+    pop AX
+    pop BX
+    pop CX
 endm
 
 mIsCell macro
@@ -450,7 +477,7 @@ mStringToNum macro
 
     nextNum:
         mul BX 
-        mov DL, recoveredNumber[SI]
+        mov DL, recoveredStr[SI]
         cmp DL, 24h
         je end
         sub DL, 30h

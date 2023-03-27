@@ -62,7 +62,7 @@ testStr DB 'testeando $'
 ; Para las macros
 numberGotten DW ?, '$'
 recoveredStr DB 7 DUP('$')
-recoveredNumber DB 7 dup('$')
+
 ; ------------------------------------
 ; Tablero
 colName DB 0Dh,'      A      B      C      D      E      F      G      H      I      J      K  ', 0Dh, 0Ah, '$'
