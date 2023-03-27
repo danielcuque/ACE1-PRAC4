@@ -43,7 +43,7 @@ MAXIMOCommand DB 06h,'MAXIMO'
 
 ; ------------------------------------
 ; Comandos para operaciones sobre ficheros
-IMPORTARCommand DB 08h,'IMPORTAR'
+IMPORTARCommand DB 08h,'IMPORTAR', '$'
 EXPORTARCommand DB 08h,'EXPORTAR'
 TABULADORCommand DB 09h
 ; ------------------------------------
@@ -72,9 +72,10 @@ colValue DB 0
 
 ; ------------------------------------
 ; Parametros para el comando IMPORTAR
-fileNameBuffer DB 102h dup(0ff, 0)
+fileBuffer DB 102h dup(0)
+fileName DB 32h dup(0)
 fileHandler DW ?
-fileName DW ?, 0
+letraColumna DB 'Letra de la columna para $'
 
 ; ------------------------------------
 ; Buffer del teclado

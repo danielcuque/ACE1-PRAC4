@@ -441,30 +441,98 @@ mResetrecoveredStr macro
     pop CX
 endm
 
+;; Pasos para importar
+;; 1. Avanzar con el buffer la cantidad de letras que tiene la palabra IMPORTAR
+;; 2. Saltarse los espacios para llegar al nombre del archivo
+;; 3. Leer el archivo
+;; 4. Leer la frase SEPARADO POR TABULADORES
+
 mImportar macro
-    mPrintMsg testStr
-    mWaitEnter
-endm
-
-mReadFile macro
-    LOCAL start, end, fail, success
+    LOCAL start, readFileName, end, fail, success
+    push BX
     push AX
+    push DI
 
-    mEmptyBuffer fileNameBuffer         ;; Limpiamos el buffer del archivo
     add SI, 08h                         ;; Aumentamos en 8 posiciones el índice SI que lleva el control del buffer del teclado
 
     mSkipWhiteSpace                     ;; Nos saltamos el espacio en blanco para llegar al nombre del archivo
     cmp DL, 00                          ;; Si el buffer no es nulo, entonces continuamos
     je fail
 
+    mResetVar fileName                  ;; Reiniciamos el nombre del archivo
+    lea BX, fileName                    ;; Obtenemos la direccion de memoria del archivo
+
+    readFileName:
+        mov AL, [SI]
+
+        cmp AL, 0Dh                     ;; Significa que al comando le faltan argumentos
+        je fail
+
+        cmp AL, 20h                     ;; Si es un espacio, significa que ya terminamos de leer el nombre
+        je start                        ;; Deja a SI en el primer espacio después del nombre del archivo
+
+        mov [BX], AL                    ;; Obtenemos el valor que está en SI y lo metemos al nombre del archivo
+        inc BX                          ;; Incrementamos BX para avanzar a la siguiente posición
+        inc SI                          ;; Incrementamos SI para avanzar en el buffer
+        jmp readFileName
+
+    start:
+                                        ;; Obtenemos el nombre del archivo
+        
+        mReadFile                       ;; Cargamos la información del archivo al buffer
+        cmp DL, 00
+        je fail
+
+        mSkipWhiteSpace
+        cmp DL, 00
+        je fail
+        
+        jmp end
+
+    fail:
+        mPrintMsg errorArgsStr
+        mPrintMsg IMPORTARCommand
+    end:
+    pop DI
+    pop AX
+    pop BX
+endm
+
+mResetVar macro var
+    LOCAL start
+    push CX
+    push AX
+    push DI
+
+    lea DI, var
+    mov CX, sizeof var
+    mov AX, 24h
+    start:
+        mov [DI], AL
+        inc DI
+    loop start
+
+    pop DI
+    pop AX
+    pop CX
+endm
+
+mReadFile macro
+    LOCAL start, end, fail, success
+    push AX
+
     xor AX, AX
+
+    mResetVar fileBuffer
+
     lea DI, fileName
     start:
         
+
+        mov DL, 01
         jmp end
-    fail:   
-        mPrintMsg errorFileNotFound
-    
+    fail:
+        mov DL, 00
     end:
     pop AX
 endm
@@ -732,6 +800,7 @@ endm
 
 ; ------------------------------------
 mEmptyBuffer macro buffer
+    LOCAL emptyBuffer
     push SI
     push CX
     push AX
