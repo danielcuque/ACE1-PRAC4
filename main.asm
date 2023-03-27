@@ -60,7 +60,7 @@ returnValue DW 0                        ;; Esta variable se invocará cuando se 
 testStr DB 'testeando $'
 ; ------------------------------------
 ; Para las macros
-numberGotten DW ?, '$'
+numberGotten DW ?
 recoveredStr DB 7 DUP('$')
 
 ; ------------------------------------
@@ -85,8 +85,7 @@ keyBoardBuffer DB 102h dup (0ff, 0)
 ; ------------------------------------
 ; Parametros para GUARDAR
 
-guardarParametroNumero DW 7 dup('$')
-guardarParametroCelda DW 2 dup('$')
+guardarParametroNumero DW 0
 
 ; ------------------------------------
 ; ------------------------------------

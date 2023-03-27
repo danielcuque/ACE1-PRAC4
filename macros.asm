@@ -166,7 +166,7 @@ endm
 
 ;; Evalua el argumento 1 de la funcion GUARDAR, esta puede ser
 ;; NUMERO           ->  HASTA 5 DIGITOS
-;; REFERENCIA       ->  CELDA DE LA A1 HASTA LA K23
+;; REFERENCIA       ->  CELDA DE LA A0 HASTA LA K22
 ;; VALOR_RETORNO    -> * (En este valor que almacena operaciones de otras funciones)
 
 mEvaluateGuardarArg1 macro
@@ -200,9 +200,8 @@ mEvaluateGuardarArg1 macro
         jmp end 
 
     isNumber:
-        mStringToNum
-        mov DI, offset numberGotten
-        mov BX, [DI]
+        
+        mov BX, [numberGotten]
         mov [guardarParametroNumero], BX
         jmp end
 
@@ -285,8 +284,6 @@ mIsCell macro
     
     mov BX, SI              ;; Primer caracter de la celda teoricamente, si la celda es A22, está posicionado en A
 
-    mPrintSIIndex
-    mWaitEnter
         
     start:
         mIsLetter           ;; Si empieza con letra, puede ser una dirección de celda
@@ -307,7 +304,6 @@ mIsCell macro
         ;; Para este punto, tenemos el valor de la fila en recoveredStr y necesitamos convertila a numero
         ;; El valor de la columna está en colValue
         
-        mStringToNum                              ;; Transformamos el numero de columna a numero y se almacena en numberGotten
         xor DX, DX
         mov AX, 0Bh                               ;; A CX le cargo el valor de 11
         mov BX, [numberGotten]                    ;; Obtengo el valor de la Fila
@@ -415,11 +411,12 @@ mIsNumber macro
             mResetrecoveredStr
 
             createNumber:
-            mov AL, [SI]                    ;; Movemos el valor que se encuentra en SI a AX, por ejemplo, si en Si está 1, entonces lo movemos
-            mov [BX], AL                    ;; Le insertamos ese valor a la variable de recoveredStr
-            inc BX                          ;; Incrementamos DI
-            inc SI                          ;; Incrementamos SI, para avanzar en el buffer
-            loop createNumber               ;; Ciclamos
+                mov AL, [SI]                    ;; Movemos el valor que se encuentra en SI a AX, por ejemplo, si en Si está 1, entonces lo movemos
+                mov [BX], AL                    ;; Le insertamos ese valor a la variable de recoveredStr
+                inc BX                          ;; Incrementamos DI
+                inc SI                          ;; Incrementamos SI, para avanzar en el buffer
+                loop createNumber               ;; Ciclamos
+                mStringToNum                    ;; Convertimos el String a número
     end:
     pop DI
     pop CX
@@ -545,7 +542,7 @@ mNumToString macro
 
     mov BX, 0Ah                             ;; Cargamos a BX con 10
     xor CX, CX                              ;; Limpiamos a cx
-    mov AX, numberGotten                          ;; Le cargamos a AX el valor del numero que queremos convertir
+    mov AX, numberGotten                    ;; Le cargamos a AX el valor del numero que queremos convertir
 
     extract:
         xor DX, DX                          ;; Limpio a DX
@@ -599,6 +596,7 @@ endm
 ; ------------------------------------
 
 ; ------------------------------------
+;
 mStringToNum macro
     LOCAL nextNum, end
     ;; Protejo los registros que voy a usar en el macros
@@ -624,7 +622,7 @@ mStringToNum macro
         je end
         jmp nextNum
     end:
-        mov numberGotten, AX
+        mov [numberGotten], AX
 
     ;; Protejo los registros que voy a usar en el macros
     pop SI
