@@ -532,24 +532,16 @@ mReadFile macro
 
     mov AH, 3Dh                 ;; Función para abrir el archivo
     mov AL, 0                   ;; Modo de lectura
-    lea DX, fileName
-    int 21
+    lea DX, fileName            
+    int 21h
 
     jc fail
     mov [fileHandler], AX
 
-    mov AH, 3Fh 
-    lea DX, fileBuffer
-    mov CX, 01h
-    mov BX, [fileHandler]
-    int 21h
-    jc fail                 
-
-    mPrintMsg fileBuffer
-    mPrintMsg fileHandler
+    mReadHeadersCsv
 
     mov AH, 3Eh
-    mov BX, fileHandler
+    mov BX, [fileHandler]
     int 21h
     jc fail
 
@@ -569,12 +561,84 @@ mReadFile macro
 endm
 
 mReadHeadersCsv macro
-    LOCAL start, end, fail, success
+    LOCAL start, changeChar, showHeader, compareNextChar, endOfLine, continue, end, fail, success
     push DI
+    push AX
+
+    lea DI, fileLineBuffer
     start:
+        mov BX, [fileHandler] 
+        mov CX, 1                   ;; Read 1 byte
+        mov DX, DI                  ;; Buffer
+        mov AH, 3fh
+        int 21
+        jc fail
+        
+        mov AL, [DI]
+
+        cmp AL, 0Dh                 ;; Retorno de carro
+        je success
+
+        cmp AL, 00h                 ;; Caracter nulo
+        je success
+
+        cmp AL, 0Ah                 ;; LF
+        je success
+
+        cmp AL, 02Ch                ;; 02C = COMA (USAR ASCII TAB)
+        je changeChar
+
+        jmp continue
+        
+
+        changeChar:
+            mov AL, 024h
+            
+        continue:
+            mov [DI], AL
+            inc DI
+            jmp start
+    
     success:
+        lea DI, fileLineBuffer
+
+        showHeader:
+            mPrintMsg letraColumna
+            mPrintPartialDirection DI
+            mWaitEnter
+            mPrintMsg newLine
+
+        advanceChar:
+            mov AL, [DI]
+            
+            cmp AL, 024h
+            je compareNextChar
+            inc DI
+            jmp advanceChar
+
+        compareNextChar:
+            mov AL, [DI + 1]
+            cmp AL, 024h
+            je endOfLine
+            inc DI
+            jmp showHeader
+            
+    endOfLine:
+        mov DL, 01h
+        jmp end
     fail:
+        mov DL, 00h
     end:
+    pop AX
+    pop DI
+endm
+
+mPrintOneChar macro char
+    LOCAL start
+    push DI
+    lea DI, bufferPrintOneChar
+    mov [DI], char
+    mPrintMsg bufferPrintOneChar
     pop DI
 endm
 
