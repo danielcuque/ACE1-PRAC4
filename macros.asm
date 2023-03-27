@@ -492,6 +492,8 @@ mImportar macro
     fail:
         mPrintMsg errorArgsStr
         mPrintMsg IMPORTARCommand
+        mPrintMsg newLine
+        mWaitEnter
     end:
     pop DI
     pop AX
@@ -520,21 +522,70 @@ endm
 mReadFile macro
     LOCAL start, end, fail, success
     push AX
+    push BX
+    push CX
+    push DX
 
     xor AX, AX
 
-    mResetVar fileBuffer
+    mResetVar fileBuffer        ;; Reiniciamos nuestro buffer
 
-    lea DI, fileName
-    start:
-        
+    mov AH, 3Dh                 ;; Función para abrir el archivo
+    mov AL, 0                   ;; Modo de lectura
+    lea DX, fileName
+    int 21
 
+    jc fail
+    mov [fileHandler], AX
+
+    mov AH, 3Fh 
+    lea DX, fileBuffer
+    mov CX, 01h
+    mov BX, [fileHandler]
+    int 21h
+    jc fail                 
+
+    mPrintMsg fileBuffer
+    mPrintMsg fileHandler
+
+    mov AH, 3Eh
+    mov BX, fileHandler
+    int 21h
+    jc fail
+
+    ;; En esta sección ya podemos usar la info cargada al buffer
         mov DL, 01
+        mWaitEnter
         jmp end
     fail:
+        mPrintMsg errorFileNotFound
         mov DL, 00
+
     end:
+    pop DX
+    pop CX
+    pop BX
     pop AX
+endm
+
+mReadHeadersCsv macro
+    LOCAL start, end, fail, success
+    push DI
+    start:
+    success:
+    fail:
+    end:
+    pop DI
+endm
+
+mReadCellsCsv macro
+    LOCAL start, end, fail, success
+    push DI
+    start:
+    success:
+    fail:
+    end:
+    pop DI
 endm
 
 mTruncateFile macro

@@ -72,10 +72,14 @@ colValue DB 0
 
 ; ------------------------------------
 ; Parametros para el comando IMPORTAR
-fileBuffer DB 102h dup(0)
-fileName DB 32h dup(0)
-fileHandler DW ?
-letraColumna DB 'Letra de la columna para $'
+fileBuffer DW 102h dup(0)                       ;; Informacion del archivo
+bytesRead DB ?                                  ;; Bytes leídos
+fileName DB 32h dup(0)                          ;; Nombre del archivo
+fileHeaderName DB 20h                           ;; Guarda el encabezado de la columna, por ejemplo, Tarea 1
+fileHandler DW ?                                ;; Para el fileHandler
+filePosColumn DB 0Bh dup(0)                     ;; Máximo va a tener 11 columnas, aquí se guardará la posición en la que vienen los encabezados
+bufferGetPosColumn DB 03h dup(0)                ;; Esta variable servirá para obtener la posición de la columna [0] = tamaño, [1] = bytes leídos, [2] = Columna
+letraColumna DB 'Letra de la columna para $'    ;; Mostramos el mensaje para agarrar 
 
 ; ------------------------------------
 ; Buffer del teclado
@@ -93,9 +97,9 @@ guardarParametroNumero DW 0
 ; ------------------------------------
 ; ------------------------------------
 ; Mensajes de error
-errorCommand DB 'El comando no existe', '$'
-errorArgsStr DB 'Faltan argumentos en la funcion ' , '$'
-errrorValueArgs DB 'Valores incorrectos' , '$'
+errorCommand DB 'El comando no existe $'
+errorArgsStr DB 'Faltan argumentos en la funcion $'
+errrorValueArgs DB 'Valores incorrectos $' 
 errorFileNotFound DB 'No se pudo encontrar el archivo $'
 errorSizeOfNumber DB 'Numero demasiado grande $'
 ; ------------------------------------
