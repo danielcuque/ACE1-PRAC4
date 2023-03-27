@@ -135,25 +135,25 @@ mGuardar macro
         cmp DL, 00                  ;; Si la función retorna 00, significa que los argumentos son incorrectos
         je errorArgs                ;;
 
-        mSkipWhiteSpace
+        mSkipWhiteSpace             ;; Nos saltamos los espacios
+        cmp DL, 00                  
+        je errorArgs
+
+        mCompareCommand ENCommand   ;; Nos aseguramos que venga la palabra EN
+        cmp DL, 00                  
+        je errorArgs
+
+        add SI, 02h                 ;; Avanzamos en el buffer
+    
+        mSkipWhiteSpace             ;; Nos saltamos los espacios otra vez
         cmp DL, 00
         je errorArgs
 
-        mCompareCommand ENCommand
+        mEvaluateGuardarArg2        ;; Evaluamos el argumento 2, que es únicamente una celda
         cmp DL, 00
         je errorArgs
 
-        add SI, 02h
-
-        mSkipWhiteSpace
-        cmp DL, 00
-        je errorArgs
-
-        mEvaluateGuardarArg2
-        cmp DL, 00
-        je errorArgs
-
-        jmp endEvaluate             ;;
+        jmp endEvaluate             ;; Si todo sale bien, la función se ejecutó correctamente
 
     errorArgs:
         mPrintMsg errorArgsStr
@@ -266,7 +266,6 @@ mCompareCommand macro commandStr
     mov DI, offset commandStr
     mCompareStr
 endm
-
 
 ;; Este macro identifica si la cadena de caracteres es un numero
 ;; Si logra identificar un número, entonces modifica la posición de SI hasta donde encuentre espacios
@@ -442,16 +441,59 @@ mResetrecoveredStr macro
     pop CX
 endm
 
-
-
 mImportar macro
     mPrintMsg testStr
+    mWaitEnter
+endm
+
+mReadFile macro
+    LOCAL start, end, fail, success
+    push AX
+
+    mEmptyBuffer fileNameBuffer         ;; Limpiamos el buffer del archivo
+    add SI, 08h                         ;; Aumentamos en 8 posiciones el índice SI que lleva el control del buffer del teclado
+
+    mSkipWhiteSpace                     ;; Nos saltamos el espacio en blanco para llegar al nombre del archivo
+    cmp DL, 00                          ;; Si el buffer no es nulo, entonces continuamos
+    je fail
+
+    xor AX, AX
+    lea DI, fileName
+    start:
+        
+        jmp end
+    fail:   
+        mPrintMsg errorFileNotFound
+    
+    end:
+    pop AX
+endm
+
+mTruncateFile macro
+    LOCAL failed
+    push CX
+
+    mov CX, 0
+    lea DX, offset 
+    mov AH, 03C
+
+    int 21h
+
+    JC failed
+
+    mov fileHandler, AX
+    jmp end:
+
+    failed:
+        
+
+    end:
+    pop CX
 endm
 
 mSuma macro
 
 endm
-
 
 ;; Este macro avanza el macro hasta encontrar una palabra
 ;; SI es la posicion del buffer
@@ -641,37 +683,37 @@ mPrintTable macro
 
     mPrintMsg colName
 
-    mov SI, offset mainTable                ;; Obtenemos la direccion de memoria del tablero
-    mov BX, 00h                             ;; Colocamos en 0 a BX para llevar el registro del numero de filas
+    mov SI, offset mainTable                    ;; Obtenemos la direccion de memoria del tablero
+    mov BX, 00h                                 ;; Colocamos en 0 a BX para llevar el registro del numero de filas
 
-    mov CX, 17h                             ;; Colocamos en CX el numero de filas
+    mov CX, 17h                                 ;; Colocamos en CX el numero de filas
 
     printRows:
-        mov [numberGotten], BX                ;; Cargamos a numberGotten con el registro contador, en este caso es BX
-        mNumToString                        ;; Usamos el macro para convertir el número que se almacenó en numberGotten y covertilo a str
+        mov [numberGotten], BX                  ;; Cargamos a numberGotten con el registro contador, en este caso es BX
+        mNumToString                            ; Usamos el macro para convertir el número que se almacenó en numberGotten y covertilo a str
         
         push DX
         mov DX, offset recoveredStr
         add DX, 04h
-        mPrintPartialDirection DX       ;; Le mandamos esa dirección de memoria a la macro
-        mPrintMsg espacio               ;; Le damos un espacio para separarlo de la cuadricula
+        mPrintPartialDirection DX           ;; Le mandamos esa dirección de memoria a la macro
+        mPrintMsg espacio                   ;; Le damos un espacio para separarlo de la cuadricula
         pop DX
 
-        push CX                         ;; Protegemos nuestro registro CX que guarda el contador para imprimir las filas
-        mov CX, 0Bh                     ;; Lo inicializamos en B = 11 dec  para imprimir las columnas
+        push CX                             ;; Protegemos nuestro registro CX que guarda el contador para imprimir las filas
+        mov CX, 0Bh                         ;; Lo inicializamos en B = 11 dec  para imprimir las columnas
         printCols:
-            mov DI, offset numberGotten ;; Movemos la direccion de memoria del numero obtenido
-            mov DX, [SI]                ;; Le cargamos a DX el valor de la posición del tablero
-            mov [DI], DX                ;; Movemos el valor que se encuentra en la posición DI del arreglo 
-            mPrintNumberConverted       ;; Imprimimos el valor de la celda
-            add SI, 02h                 ;; Al ser una DW, es necesario avanzar 2 bytes
-            loop printCols              ;; Ciclamos hasta que el contador llegue a 0 indicando que ya se imprimieron las columnas
+            mov DI, offset numberGotten     ;; Movemos la direccion de memoria del numero obtenido
+            mov DX, [SI]                    ;; Le cargamos a DX el valor de la posición del tablero
+            mov [DI], DX                    ;; Movemos el valor que se encuentra en la posición DI del arreglo 
+            mPrintNumberConverted           ;; Imprimimos el valor de la celda
+            add SI, 02h                     ;; Al ser una DW, es necesario avanzar 2 bytes
+            loop printCols                  ;; Ciclamos hasta que el contador llegue a 0 indicando que ya se imprimieron las columnas
 
-            pop CX                      ;; Regresamos el valor del contador de las filas a su estado original
-            inc BX                      ;; Incrementamos en 1 el contador que lleva el registro de las filas
-            dec CX                      ;; Incrementamos CX para poder recorrer todo el arreglo
-            cmp CX, 00h                 ;; Si CX no es cero, entones que siga imprimiendo filas
-            jne printRows               ;; Regresamos a imprimir una nueva fila
+            pop CX                          ;; Regresamos el valor del contador de las filas a su estado original
+            inc BX                          ;; Incrementamos en 1 el contador que lleva el registro de las filas
+            dec CX                          ;; Incrementamos CX para poder recorrer todo el arreglo
+            cmp CX, 00h                     ;; Si CX no es cero, entones que siga imprimiendo filas
+            jne printRows                   ;; Regresamos a imprimir una nueva fila
     
     ;; Regresamos a su estado original los registros
     pop SI
@@ -689,12 +731,12 @@ mPrintNumberConverted macro
 endm
 
 ; ------------------------------------
-mEmptyBuffer macro
+mEmptyBuffer macro buffer
     push SI
     push CX
     push AX
 
-    mov SI, offset keyBoardBuffer
+    mov SI, offset buffer
     mov CL, [SI]
     mov CH, 00
     add SI, 02
@@ -719,7 +761,7 @@ mGetInputKeyboard macro
     push AX
     push CX
 
-    mEmptyBuffer
+    mEmptyBuffer keyBoardBuffer
 
     mPrintMsg colonChar
 

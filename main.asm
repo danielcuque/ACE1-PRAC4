@@ -72,7 +72,9 @@ colValue DB 0
 
 ; ------------------------------------
 ; Parametros para el comando IMPORTAR
-fileNameBuffer DB 100h dup(0)
+fileNameBuffer DB 102h dup(0ff, 0)
+fileHandler DW ?
+fileName DW ?, 0
 
 ; ------------------------------------
 ; Buffer del teclado
@@ -93,7 +95,7 @@ guardarParametroNumero DW 0
 errorCommand DB 'El comando no existe', '$'
 errorArgsStr DB 'Faltan argumentos en la funcion ' , '$'
 errrorValueArgs DB 'Valores incorrectos' , '$'
-
+errorFileNotFound DB 'No se pudo encontrar el archivo $'
 errorSizeOfNumber DB 'Numero demasiado grande $'
 ; ------------------------------------
 
