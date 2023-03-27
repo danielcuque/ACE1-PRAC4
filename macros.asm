@@ -298,7 +298,6 @@ mIsCell macro
     push BX
     
     xor AX, AX
-    mov DL, 01              ;; Es valido
     
     mov BX, SI              ;; Primer caracter de la celda teoricamente, si la celda es A22, está posicionado en A
     start:
@@ -315,10 +314,10 @@ mIsCell macro
         jmp end
 
     success:
-        mPrintMsg testStr
         ;; (Fila * 11 + Col) * 2
         ;; Para este punto, tenemos el valor de la fila en recoveredStr y necesitamos convertila a numero
         ;; El valor de la columna está en colValue
+        
         mStringToNum                    ;; Transformamos el numero de columna a numero y se almacena en numberGotten
         mov AX, 0Bh
         mov BX, [numberGotten]
@@ -333,6 +332,7 @@ mIsCell macro
         mov [DI], BX                    ;; Le asignamos el valor calculado de BX
         cmp [cellPosition], 0FEh                  ;; Comparamos que no sea mayor a 11*23
         ja isNot
+        mov DL, 01
     
     end: 
     pop BX
@@ -566,7 +566,7 @@ mPrintTable macro
     mPrintMsg colName
 
     mov SI, offset mainTable                ;; Obtenemos la direccion de memoria del tablero
-    mov BX, 01h                             ;; Colocamos en 0 a BX para llevar el registro del numero de filas
+    mov BX, 00h                             ;; Colocamos en 0 a BX para llevar el registro del numero de filas
 
     mov CX, 17h                             ;; Colocamos en CX el numero de filas
 
