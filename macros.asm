@@ -182,6 +182,7 @@ mEvaluateGuardarArg1 macro
         jmp end 
     
     isNumber:
+        mWaitEnter
         jmp end
     
     isCell:
@@ -236,7 +237,7 @@ mIsNumber macro
         cmp AL, 39h         ;; Comparamos que el ASCII no sea mayor al ASCII de 9
         ja isNot
 
-        inc CX
+        inc CX              ;; Incrementamos CX para poder hacer un loop y guardar el número recuperado en formato string
         jmp start
 
     isNot:
@@ -246,14 +247,19 @@ mIsNumber macro
     success:
         mov DI, 00
         xor AX, AX
-        mov BX, offset numberGotten
+        mov BX, offset recoveredNumber
+        cmp CX, 05h
+        jl generateNumber
+
+        mPrintMsg errorSizeOfNumber
+        jmp isNot
+
         generateNumber:
             mov AX, [SI]
             mov [BX + DI], AX
             inc DI
             inc SI
             loop generateNumber   
-
     end:
     pop DI
     pop CX
@@ -428,7 +434,7 @@ endm
 ; ------------------------------------
 
 ; ------------------------------------
-mStringToNum macro number
+mStringToNum macro
     ;; Protejo los registros que voy a usar en el macros
     push AX
     push BX
@@ -444,12 +450,15 @@ mStringToNum macro number
 
     nextNum:
         mul BX 
-        mov DL, number[SI]
+        mov DL, recoveredNumber[SI]
+        cmp DL, 24h
+        je end
         sub DL, 30h
         add AX, DX
         inc SI
         loop nextNum
-    mov numberGotten, AX
+    end:
+        mov numberGotten, AX
 
     ;; Protejo los registros que voy a usar en el macros
     pop SI

@@ -62,6 +62,7 @@ testStr DB 'testeando $'
 ; Para las macros
 numberGotten DW ?, '$'
 recoveredStr DB 7 DUP('$')
+recoveredNumber DB 7 dup('$')
 ; ------------------------------------
 ; Tablero
 colName DB 0Dh,'      A      B      C      D      E      F      G      H      I      J      K  ', 0Dh, 0Ah, '$'
@@ -91,6 +92,8 @@ guardarParametroCelda DW 2 dup('$')
 errorCommand DB 'El comando no existe', '$'
 errorArgsStr DB 'Faltan argumentos en la función ' , '$'
 errrorValueArgs DB 'Valores incorrectos' , '$'
+
+errorSizeOfNumber DB 'Numero demasiado grande $'
 ; ------------------------------------
 
 .CODE
