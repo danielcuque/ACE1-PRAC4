@@ -9,15 +9,15 @@ rowDimension equ 23t ; 23 filas
 
 ; ------------------------------------
 ; Palabras reservadas
-ENCommand DB 'EN'
-YCommand DB 'Y'
-ENTRECommand DB 'ENTRE'
-ALACommand DB 'A LA'
-HASTACommand DB 'HASTA'
-DESDECommand DB 'DESDE'
-HACIACommand DB 'HACIA'
+ENCommand DB 02h,'EN'
+YCommand DB 01h,'Y'
+ENTRECommand DB 05h,'ENTRE'
+ALACommand DB 04,'A LA'
+HASTACommand DB 05h,'HASTA'
+DESDECommand DB 05h,'DESDE'
+HACIACommand DB 05h,'HACIA'
 SALIRCommand DB 05h, 'SALIR'
-PORTABCommand DB 'SEPARADOR POR TABULADOR'
+PORTABCommand DB 017h,'SEPARADOR POR TABULADOR'
 ; ------------------------------------
 
 ; ------------------------------------
@@ -67,7 +67,7 @@ recoveredStr DB 7 DUP('$')
 ; Tablero
 colName DB 0Dh,'      A      B      C      D      E      F      G      H      I      J      K  ', 0Dh, 0Ah, '$'
 mainTable DW 253 dup(0)
-cellPosition DB 0
+cellPosition DW 0
 colValue DB 0
 
 ; ------------------------------------
@@ -92,7 +92,7 @@ guardarParametroCelda DW 2 dup('$')
 ; ------------------------------------
 ; Mensajes de error
 errorCommand DB 'El comando no existe', '$'
-errorArgsStr DB 'Faltan argumentos en la función ' , '$'
+errorArgsStr DB 'Faltan argumentos en la funcion ' , '$'
 errrorValueArgs DB 'Valores incorrectos' , '$'
 
 errorSizeOfNumber DB 'Numero demasiado grande $'
