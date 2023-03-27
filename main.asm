@@ -68,7 +68,6 @@ recoveredStr DB 7 DUP('$')
 colName DB 0Dh,'      A      B      C      D      E      F      G      H      I      J      K  ', 0Dh, 0Ah, '$'
 mainTable DW 253 dup(0)
 cellPosition DB 0
-rowValue DB 0
 colValue DB 0
 
 ; ------------------------------------

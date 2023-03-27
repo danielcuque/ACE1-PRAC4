@@ -186,6 +186,7 @@ mEvaluateGuardarArg1 macro
     
     isCell:
         mPrintMsg testStr
+        mWaitEnter
         jmp end
 
     errorEvaluateArg:
@@ -301,27 +302,38 @@ mIsCell macro
     
     mov BX, SI              ;; Primer caracter de la celda teoricamente, si la celda es A22, está posicionado en A
     start:
-        mIsLetter
-        cmp DL, 00
+        mIsLetter           ;; Si empieza con letra, puede ser una dirección de celda
+        cmp DL, 00          ;; Si la funcion devuelve 00 significa que no es
         je isNot
 
-        mIsNumber
+        mIsNumber           ;; Ahora verificamos el numero, si si es numero, avanzamos
         cmp DL, 00
-        je isNot
+        jne success         ;; Aqui ponemos jne para no toparnos con el isNot
 
     isNot:
         mov DL, 00
         jmp end
 
     success:
+        mPrintMsg testStr
         ;; (Fila * 11 + Col) * 2
-        mStringToNum
-        mov AX, offset rowValue         ;; Cargamos la direccion de la fila con su valor
-        mov BX, [AX]                    ;; Cargamos a BX el valor de la fila, puede ser de 0 a 23
-        mov CX, 11h
-        mul CX
-        add CX, 
+        ;; Para este punto, tenemos el valor de la fila en recoveredStr y necesitamos convertila a numero
+        ;; El valor de la columna está en colValue
+        mStringToNum                    ;; Transformamos el numero de columna a numero y se almacena en numberGotten
+        mov AX, 0Bh
+        mov BX, [numberGotten]
+        mul BX                          ;; Aquí tengo el valor de Fila * 11
 
+        mov AX, 02h
+        mov DI, offset colValue
+        add BX, [DI]                    ;; Le sumamos el valor de la columna
+        mul BX
+
+        mov DI, offset cellPosition     ;; Obtenemos la posición de memoria de la variable que guarda la posición del tablero
+        mov [DI], BX                    ;; Le asignamos el valor calculado de BX
+        cmp [cellPosition], 0FEh                  ;; Comparamos que no sea mayor a 11*23
+        ja isNot
+    
     end: 
     pop BX
     pop AX
