@@ -182,7 +182,8 @@ mEvaluateGuardarArg1 macro
         jmp end 
     
     isNumber:
-        mPrintMsg recoveredStr
+        mStringToNum
+        mPrintNumberConverted
         mWaitEnter
         jmp end
     
@@ -220,8 +221,6 @@ mIsNumber macro
     mov BX, SI              ;; Copiamos la direccion de memoria de SI para no modificar SI si no es necesario
     mov DL, 01h             ;; Cargamos en un inicio a DL con 01 para indicar que es verdadero
     start:
-        
-        mWaitEnter
         mov AL, [BX]
     
         cmp AL, 20h         ;; Si llegamos al espacio y todo está correcto, entonces generamos el numero
@@ -282,7 +281,7 @@ mResetrecoveredStr macro
     xor CX, CX
     mov CL, 07
     mov BX, offset recoveredStr
-    mov AL, 024h
+    mov AL, 24h
 
     start:
         mov [BX], AL
@@ -462,6 +461,7 @@ endm
 
 ; ------------------------------------
 mStringToNum macro
+    LOCAL nextNum, foundZero, end
     ;; Protejo los registros que voy a usar en el macros
     push AX
     push BX
@@ -473,17 +473,17 @@ mStringToNum macro
     xor AX, AX ; Limpio AX
     xor DX, DX ; Limpio DX
     mov BX, 0Ah ; Cargo a BX con 10 decimal
-    mov CX, 05h ; Cargo a CX con 5 para que ese sea el numero de repeticiones que haga el loop
-
+    
     nextNum:
         mul BX 
         mov DL, recoveredStr[SI]
-        cmp DL, 24h
-        je end
         sub DL, 30h
         add AX, DX
         inc SI
-        loop nextNum
+        mov DL, recoveredStr[SI]
+        cmp DL, 24h
+        je end
+        jmp nextNum
     end:
         mov numberGotten, AX
 
