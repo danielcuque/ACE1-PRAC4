@@ -200,7 +200,6 @@ mEvaluateGuardarArg1 macro
         jmp end 
 
     isNumber:
-        
         mov BX, [numberGotten]
         mov [guardarParametroNumero], BX
         jmp end
@@ -308,9 +307,7 @@ mIsCell macro
         mov AX, 0Bh                               ;; A CX le cargo el valor de 11
         mov BX, [numberGotten]                    ;; Obtengo el valor de la Fila
         mul BX                                    ;; Aquí tengo el valor de Fila * 11
-
         
-
         mov DI, offset colValue                   ;; Obtengo la dirección del valor de la columna
         mov BX, [DI]
         add AX, BX                                ;; Le sumamos el valor de la columna
@@ -650,7 +647,7 @@ mPrintTable macro
     mov CX, 17h                             ;; Colocamos en CX el numero de filas
 
     printRows:
-        mov numberGotten, BX                ;; Cargamos a numberGotten con el registro contador, en este caso es BX
+        mov [numberGotten], BX                ;; Cargamos a numberGotten con el registro contador, en este caso es BX
         mNumToString                        ;; Usamos el macro para convertir el número que se almacenó en numberGotten y covertilo a str
         
         push DX
@@ -665,7 +662,7 @@ mPrintTable macro
         printCols:
             mov DI, offset numberGotten ;; Movemos la direccion de memoria del numero obtenido
             mov DX, [SI]                ;; Le cargamos a DX el valor de la posición del tablero
-            mov [DI], DL                ;; Movemos el valor que se encuentra en la posición DI del arreglo 
+            mov [DI], DX                ;; Movemos el valor que se encuentra en la posición DI del arreglo 
             mPrintNumberConverted       ;; Imprimimos el valor de la celda
             add SI, 02h                 ;; Al ser una DW, es necesario avanzar 2 bytes
             loop printCols              ;; Ciclamos hasta que el contador llegue a 0 indicando que ya se imprimieron las columnas
