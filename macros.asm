@@ -182,12 +182,10 @@ mEvaluateGuardarArg1 macro
         jmp end 
     
     isNumber:
-        mStringToNum
-        mPrintNumberConverted
-        mWaitEnter
         jmp end
     
     isCell:
+        mPrintMsg testStr
         jmp end
 
     errorEvaluateArg:
@@ -211,7 +209,7 @@ endm
 ;; El indice SI lleva el control del buffer
 
 mIsNumber macro
-    LOCAL start, success, isNot, end
+    LOCAL start, createNumber, success, isNot, end, generateNumber
     push AX
     push BX
     push CX
@@ -294,21 +292,69 @@ mResetrecoveredStr macro
 endm
 
 mIsCell macro
-    ; push SI
-    ; push AX
+    LOCAL start, end, isNot, success
+    push AX
+    push BX
     
-    ; xor AX, AX
-    ; mov DL, 01
-    ; mov AL, [SI]
-    ; cmp AL, 
+    xor AX, AX
+    mov DL, 01              ;; Es valido
+    
+    mov BX, SI              ;; Primer caracter de la celda teoricamente, si la celda es A22, está posicionado en A
+    start:
+        mIsLetter
+        cmp DL, 00
+        je isNot
 
-    ; jmp end
-    ; isNot:
-    ;     mov DL, 00
+        mIsNumber
+        cmp DL, 00
+        je isNot
 
-    ; end: 
-    ; pop AX
-    ; pop SI
+    isNot:
+        mov DL, 00
+        jmp end
+
+    success:
+        ;; (Fila * 11 + Col) * 2
+        mStringToNum
+        mov AX, offset rowValue         ;; Cargamos la direccion de la fila con su valor
+        mov BX, [AX]                    ;; Cargamos a BX el valor de la fila, puede ser de 0 a 23
+        mov CX, 11h
+        mul CX
+        add CX, 
+
+    end: 
+    pop BX
+    pop AX
+endm
+
+mIsLetter macro
+    LOCAL start, end, success, isNot
+    push BX
+    push AX
+
+    mov DL, 01          ;; Cargamos inicialmente 01 indicando que sí es letra
+    xor CX, CX          ;; Limpiamos  CX
+    
+    mov BX, SI          ;; Cargamos la direccion de memoria de SI que apunta al buffer
+    start:
+        mov AL, [BX]    ;; Cargamos el valor que se encuentra actualmente en el buffer
+
+        cmp AL, 041h    ;; Si es menor a 41 no es letra
+        jb isNot
+
+        cmp AL, 04Bh    ;; Si es mayor a 04b tampoco es letra
+        ja isNot
+        
+    success:            
+        inc SI                  ;; Si llega hasta acá, entonces aumenta el valor de SI en el buffer
+        sub AL, 41h             ;; Le restamos el ASCII que indica el valor de la columna
+        mov [colValue], AL      ;; Movemos ese valor a una variable en memoria
+        jmp end                 ;; Nos vamos al final
+    isNot:
+        mov DL, 00
+    end:
+    pop AX
+    pop BX
 endm
 
 mImportar macro
