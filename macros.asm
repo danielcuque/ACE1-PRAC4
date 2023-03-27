@@ -474,18 +474,19 @@ mImportar macro
         mov [BX], AL                    ;; Obtenemos el valor que está en SI y lo metemos al nombre del archivo
         inc BX                          ;; Incrementamos BX para avanzar a la siguiente posición
         inc SI                          ;; Incrementamos SI para avanzar en el buffer
-        jmp readFileName
+        jmp readFileName 
 
     start:
-        
-        mReadFile                       ;; Cargamos la información del archivo al buffer
-        cmp DL, 00
-        je fail
 
         mSkipWhiteSpace
         cmp DL, 00
         je fail
-        
+
+        mCompareCommand PORTABCommand
+        cmp DL, 00
+        je fail
+
+        mReadFile                       ;; Cargamos la información del archivo al buffer
         jmp end
 
     fail:
@@ -493,6 +494,8 @@ mImportar macro
         mPrintMsg IMPORTARCommand
         mPrintMsg newLine
         mWaitEnter
+    
+
     end:
     pop DI
     pop AX
@@ -519,49 +522,64 @@ mResetVar macro var
 endm
 
 mReadFile macro
-    LOCAL start, end, fail, success
+    LOCAL start, end, errorToOpen, errorToClose, success
     push AX
     push BX
     push CX
 
-    xor AX, AX
+    xor CX, CX
 
-    mResetVar fileBuffer        ;; Reiniciamos nuestro buffer
-
-    mov AH, 3Dh                 ;; Función para abrir el archivo
-    mov AL, 0                   ;; Modo de lectura
-    lea DX, fileName            
+    mResetVar fileBuffer                ;; Reiniciamos nuestro buffer
+    
+    mov DX, offset fileName           
+    mov AL, 00                          ;; Modo de lectura
+    mov AH, 3dh                         ;; Función para abrir el archivo
     int 21h
+    jc errorToOpen
+    mov [fileHandler], AX
 
-    jc fail
-    mov [fileHandler], AX       ;; Cargamos la información del Handler de AX a una variable en memoria
-
-    mReadHeadersCsv             ;; Leemos los headers
-    cmp DL, 00                  ;; Si devuelve error, entonces no continuamos
+    mReadHeadersCsv                     ;; Leemos los headers
+    cmp DL, 00                          ;; Si devuelve error, entonces no continuamos
     je errorHeaders
 
     ;; En esta sección ya podemos usar la info cargada al buffer
-        mov DL, 01
-        jmp end
-    fail:
-        mPrintMsg errorFileNotFound     ;; Si no encontramos el archivo, lanzamos una alerta
-        mov DL, 00
+    mov DL, 01
+    jmp success
 
-    errorHeaders:
-        mPrintMsg errorHeadersStr       ;; Mostramos error de ingreso de columnas
-        mov DL, 00   
-        jc fail
-               
-    end:                                ;; Independientemente de lo que pase, debemos cerrar el archivo
-        mov AH, 3Eh                     ;; Cargamos a AH para hacer la interrupción de cerrar archivo
-        mov BX, [fileHandler]            
-        int 21h
-
+    errorToOpen:
+        mPrintMsg errorOpenFile         ;; Mostramos un mensaje de error de que no se pudo abrir el file
+        jmp fail                        ;; Saltamos a file para poner a DL == 0
     
-    pop CX
-    pop BX
-    pop AX
+    errorToClose:
+        mPrintMsg errorCloseFile        ;; Mostramos un error que no se pudo cerrar el archivo
+    fail:
+        mov DL, 00                      ;; Marcamos a DL con 0 para indicar que no se leyó bien el archivo
+        jmp end
+
+    errorHeaders:                       ;; Para este caso si es necesario cerrar el archivo, ya que los las columnas están mal introducidas pero el archivo sí se abrió
+        mov BX, [fileHandler]           ;; Devolvemos al handle a BX para cerrarlo    
+        mov AH, 03Eh                    ;; Cargamos a AH para hacer la interrupción de cerrar archivo
+        int 21h
+        jc errorToClose                 ;; En dado caso no se pueda cerrar bien, mostramos el error
+
+        mPrintMsg errorHeadersStr       ;; Mostramos error de ingreso de columnas
+        jc fail
+    
+    success:
+        mov DL, 01                      ;; Si todo sale bien, marcamos a DL como 01
+
+    closeFile:
+        mov BX, [fileHandler]           ;; Para cerrar el archivo, debemos de devolver el valor del handler a BX   
+        mov AH, 03Eh                    ;; Cargamos a AH para hacer la interrupción de cerrar archivo
+        int 21h                         ;; Cerramos el archivo
+        jc errorToClose                 ;; Mandamos el error si el carry flag se activa
+
+    end:                   
+        pop CX
+        pop BX
+        pop AX
 endm
+
 
 mReadHeadersCsv macro
     LOCAL start, changeChar, showHeader, compareNextChar, endOfLine, continue, end, fail, success

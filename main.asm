@@ -76,7 +76,7 @@ colValueIndex DB 0
 fileBuffer DB 102h dup(0)                       ;; Informacion del archivo
 fileName DB 32h dup(0)                          ;; Nombre del archivo
 stop DB '$'
-fileHandler DW ?                                ;; Para el fileHandler
+fileHandler DW 0                                ;; Para el fileHandler
 
 bufferColumnsPosition DB 0Bh dup('$')             
 bufferGetPosColumn DB 04h dup(2, 0)             ;; Esta variable servirá para obtener la posición de la columna [0] = tamaño, [1] = bytes leídos, [2] = Columna
@@ -102,11 +102,13 @@ guardarParametroNumero DW 0
 ; ------------------------------------
 ; Mensajes de error
 errorCommand DB 'El comando no existe $'
-errorArgsStr DB 'Faltan argumentos en la funcion $'
+errorArgsStr DB 'Faltan argumentos en la funcion  $'
 errrorValueArgs DB 'Valores incorrectos $' 
 errorFileNotFound DB 'No se pudo encontrar el archivo $'
 errorSizeOfNumber DB 'Numero demasiado grande $'
-errorHeadersStr DB 'Columna Incorrecta $'
+errorHeadersStr DB 'Columna Incorrecta', 0Dh, 0Ah, '$'
+errorCloseFile DB 'Error al cerrar el archivo', 0Dh, 0Ah, '$'
+errorOpenFile DB  'Error al abrir el archivo', 0Dh, 0Ah, '$'
 ; ------------------------------------
 
 .CODE
