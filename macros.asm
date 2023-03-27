@@ -296,6 +296,7 @@ mIsCell macro
     LOCAL start, end, isNot, success
     push AX
     push BX
+    push CX
     
     xor AX, AX
     
@@ -318,23 +319,29 @@ mIsCell macro
         ;; Para este punto, tenemos el valor de la fila en recoveredStr y necesitamos convertila a numero
         ;; El valor de la columna está en colValue
         
-        mStringToNum                    ;; Transformamos el numero de columna a numero y se almacena en numberGotten
-        mov AX, 0Bh
-        mov BX, [numberGotten]
-        mul BX                          ;; Aquí tengo el valor de Fila * 11
+        mStringToNum                              ;; Transformamos el numero de columna a numero y se almacena en numberGotten
+        mov AX, 0Bh                               ;; A CX le cargo el valor de 11
+        mov BX, [numberGotten]                    ;; Obtengo el valor de la Fila
+        mul BX                                    ;; Aquí tengo el valor de Fila * 11
 
-        mov AX, 02h
-        mov DI, offset colValue
-        add BX, [DI]                    ;; Le sumamos el valor de la columna
+        
+
+        mov DI, offset colValue                   ;; Obtengo la dirección del valor de la columna
+        mov BX, [DI]
+        add AX, BX                                ;; Le sumamos el valor de la columna
+
+        mov BX, 02h                               ;; Le cargo a BX el valor de 02 para multiplicarlo después
         mul BX
 
-        mov DI, offset cellPosition     ;; Obtenemos la posición de memoria de la variable que guarda la posición del tablero
-        mov [DI], BX                    ;; Le asignamos el valor calculado de BX
-        cmp [cellPosition], 0FEh                  ;; Comparamos que no sea mayor a 11*23
+        cmp AX, 01FAh
         ja isNot
-        mov DL, 01
+
+        mov DI, offset cellPosition               ;; Obtenemos la posición de memoria de la variable que guarda la posición del tablero
+        mov [DI], AX                              ;; Le asignamos el valor calculado de AX
+        mov DL, 01                                ;; si todo sale bien, devolvemos 1
     
     end: 
+    pop CX
     pop BX
     pop AX
 endm
