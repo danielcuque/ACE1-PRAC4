@@ -565,6 +565,7 @@ mReadHeadersCsv macro
     push AX
 
     lea DI, fileLineBuffer
+    mov [colValueIndex], 0
     start:
         mov BX, [fileHandler] 
         mov CX, 1                   ;; Read 1 byte
@@ -604,11 +605,24 @@ mReadHeadersCsv macro
         showHeader:
             mPrintMsg letraColumna
             mPrintPartialDirection DI
-            mPrintMsg newLine
-            
             mRequestColumn
             cmp DL, 00
             je fail
+
+            push DI
+            push BX
+
+            lea BX, bufferColumnsPosition
+            lea DI, colValueIndex
+            add BX, [DI]
+
+            lea DI, colValue
+            mov BX, [DI]
+
+            pop BX
+            pop DI
+        
+            mPrintMsg newLine
 
         advanceChar:
             mov AL, [DI]

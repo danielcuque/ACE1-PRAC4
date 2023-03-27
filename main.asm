@@ -69,21 +69,20 @@ colName DB 0Dh,'      A      B      C      D      E      F      G      H      I 
 mainTable DW 253 dup(0)
 cellPosition DW 0
 colValue DB 0
-
 ; ------------------------------------
 ; Parametros para el comando IMPORTAR
+
+colValueIndex DB 0
 fileBuffer DB 102h dup(0)                       ;; Informacion del archivo
-bytesRead DB ?                                  ;; Bytes leídos
 fileName DB 32h dup(0)                          ;; Nombre del archivo
-fileHeaderName DB 20h dup(0)                    ;; Guarda el encabezado de la columna, por ejemplo, Tarea 1
 stop DB '$'
 fileHandler DW ?                                ;; Para el fileHandler
-filePosColumn DB 0Bh dup(0)                     ;; Máximo va a tener 11 columnas, aquí se guardará la posición en la que vienen los encabezados
-bufferGetPosColumn DB 04h dup(2, 0)                ;; Esta variable servirá para obtener la posición de la columna [0] = tamaño, [1] = bytes leídos, [2] = Columna
+
+bufferColumnsPosition DB 0Bh dup('$')             
+bufferGetPosColumn DB 04h dup(2, 0)             ;; Esta variable servirá para obtener la posición de la columna [0] = tamaño, [1] = bytes leídos, [2] = Columna
 letraColumna DB 'Letra de la columna para $'    ;; Mostramos el mensaje para agarrar 
 
 fileLineBuffer DB 100h dup('$')
-
 bufferPrintOneChar DB 02h dup('$')
 
 ; ------------------------------------
