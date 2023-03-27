@@ -605,7 +605,10 @@ mReadHeadersCsv macro
             mPrintMsg letraColumna
             mPrintPartialDirection DI
             mPrintMsg newLine
-            mWaitEnter
+            
+            mRequestColumn
+            cmp DL, 00
+            je fail
 
         advanceChar:
             mov AL, [DI]
@@ -630,6 +633,44 @@ mReadHeadersCsv macro
     end:
     pop AX
     pop DI
+endm
+
+
+;; DL == 0, no existe la columna
+;; DL == 1, es correcta
+mRequestColumn macro
+    LOCAL start, fail, success, end
+    push DX
+    push AX
+    push CX
+    push SI
+
+    mEmptyBuffer keyBoardBuffer
+
+    mPrintMsg colonChar
+
+    lea DX, bufferGetPosColumn
+    mov AH, 0Ah
+    int 21h
+    
+    add DX, 02h
+    mov SI, DX
+
+    mIsLetter
+    cmp DL, 00
+    je fail
+
+    success:
+        mov DL, 01
+        jmp end
+
+    fail:
+        mov DL, 00
+    end:
+    pop SI
+    pop CX
+    pop AX
+    pop DX
 endm
 
 mPrintOneChar macro char

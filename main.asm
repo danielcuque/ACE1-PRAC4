@@ -79,7 +79,7 @@ fileHeaderName DB 20h dup(0)                    ;; Guarda el encabezado de la co
 stop DB '$'
 fileHandler DW ?                                ;; Para el fileHandler
 filePosColumn DB 0Bh dup(0)                     ;; Máximo va a tener 11 columnas, aquí se guardará la posición en la que vienen los encabezados
-bufferGetPosColumn DB 03h dup(0)                ;; Esta variable servirá para obtener la posición de la columna [0] = tamaño, [1] = bytes leídos, [2] = Columna
+bufferGetPosColumn DB 04h dup(2, 0)                ;; Esta variable servirá para obtener la posición de la columna [0] = tamaño, [1] = bytes leídos, [2] = Columna
 letraColumna DB 'Letra de la columna para $'    ;; Mostramos el mensaje para agarrar 
 
 fileLineBuffer DB 100h dup('$')
