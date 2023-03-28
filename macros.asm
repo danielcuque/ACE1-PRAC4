@@ -582,9 +582,9 @@ mReadFile macro
         jmp end
 
     errorHeaders:                       ;; Para este caso si es necesario cerrar el archivo, ya que los las columnas están mal introducidas pero el archivo sí se abrió
-        mPrintMsg newLine
+        mPrintMsg newLine               ;; Mostramos el error en una nueva línea
         mPrintMsg errorHeadersStr       ;; Mostramos error de ingreso de columnas
-        jmp fail
+        jmp fail                        ;; Seteamos a DL como error (00)
     
     success:
         mov DL, 01                      ;; Si todo sale bien, marcamos a DL como 01
@@ -620,80 +620,92 @@ mReadHeadersCsv macro
     mov [colValueIndex], 0          ;; Reiniciamos al index de la posición del buffer en 0
 
     start:
-        mov BX, [fileHandler]       ;; Le cargamos el file 
-        mov CX, 1                   ;; Read 1 byte
-        mov DX, DI                  ;; Buffer
-        mov AH, 3fh
-        int 21
-        jc fail
+        mov BX, [fileHandler]       ;; Le cargamos el fileHandler
+        mov CX, 1                   ;; Vamos a leer byte a byte, por lo que CX es 1
+        mov DX, DI                  ;; Cargamos a DX la direccion del primer caracter de los headers
+
+        mov AH, 3Fh                 ;; Con 3Fh empezamos a leer la información del archivo     
+        int 21                      
+        jc fail                     ;; Si el carry se carga, significa que hubo algún error
         
-        mov AL, [DI]
+        mov AL, [DI]                ;; Pasamos el caracter de los headers a AL, 
+                                    ;; Lo hacemos en AL, porque los caracteres son solo de 1 byte    
 
-        cmp AL, 0Dh                 ;; Retorno de carro
+        cmp AL, 0Dh                 ;; Si llegamos al retorno de carro, significa que llegamos al final de línea
         je success
 
-        cmp AL, 00h                 ;; Caracter nulo
+        cmp AL, 00h                 ;; También podemos indicar que si encontró un caracter nulo, se terminó la fila
         je success
 
-        cmp AL, 0Ah                 ;; LF
+        cmp AL, 0Ah                 ;; O si encuentra un salto de línea, significa que terminó
         je success
 
         cmp AL, 02Ch                ;; 02C = COMA (USAR ASCII TAB)
-        je changeChar
+        je changeChar               ;; Si encuentra un tabulador, entonces lo reemplazamos con un signo de dolar para poder imprimirlo
 
-        jmp continue
+        jmp continue                ;; Si no es ninguna de las anteriores, entonces seguimos iterando hasta terminar la línea
 
-        changeChar:
-            mov AL, 024h
+        changeChar:                 
+            mov AL, 024h            ;; En este espacio cargamos los tabuladores como signo $, en lugar de su caracter de tab, en el buffer
             
         continue:
-            mov [DI], AL
-            inc DI
-            jmp start
+            mov [DI], AL            ;; Continuamos iterando, y guardamos en el buffer de headers el texto
+            inc DI                  ;; Incrementamos DI para avanzar en el texto de la línea
+            jmp start               ;; Repetimos lo mismo
     
     success:
-        lea DI, fileLineBuffer
+        lea DI, fileLineBuffer          ;; Si todo salió bien, regresamos a DI a la posición incial del buffer para poder sacar la posición de la columna
 
         showHeader:
-            mPrintMsg letraColumna
-            mPrintPartialDirection DI
-            mRequestColumn
-            cmp DL, 00
+            mPrintMsg letraColumna          ;; Imprimimos el mensaje para preguntar en qué columna quiere que se guarde el header
+            mPrintPartialDirection DI       ;; Imprimimos la direccion de memoria que contiene los headers, como los tabs se cambiaron por dolares
+                                            ;; Entonces se imprime header por header
+            mRequestColumn                  ;; Luego le solicitamos al usuario la columna
+            cmp DL, 00                      ;; Si devuelve un valor erroneo, entonces nos vamos a fail
             je fail
 
-            push DI
+            push DI                         ;; Guardamos los valores de DI y BX para poder usarlo
             push BX
 
-            lea BX, bufferColumnsPosition
-            lea DI, colValueIndex
-            add BX, DI
+                lea BX, bufferColumnsPosition       ;; Cargamos a BX la direccion de memoria que guarda en un arreglo las columnas que se van a usar
+                                                    ;; Por ejemplo, si el usuario ingreso -> A, C, E 
+                                                    ;; en el arreglo va a guardarse como  [0, 2, 4]
+                                                    ;; y las filas también se van a calcular en esa posición
+                lea DI, colValueIndex               ;; nos ayudamos de colValueIndex para correr una posición en el arreglo donde se guardan las columnas
+                add BX, DI                          ;; Le sumamos al indice donde debe posicionarse otra vez
 
-            lea DI, colValue
-            mov [BX], DI
+                lea DI, colValue                    ;; Cargamos el colValue que devuelve mRequestColum con mIsCell
+                mov [BX], DI                        ;; Introducimos el valor al arreglo, por ejemplo [0].append(2) = [0, 2]
 
-            pop BX
+            pop BX                                  ;; Devolvemos sus valores a como estaban
             pop DI
         
-            mPrintMsg newLine
+            mPrintMsg newLine                       ;; Mostramos una nueva línea
 
         advanceChar:
-            mov AL, [DI]
+            mov AL, [DI]                            ;; En este punto, DI está posicionado en la primera letra del header
+                                                    ;; Por ejemplo si el header es (tarea 1$carnet)
+                                                    ;; en la primera iteracion va a estar en 't'
             
-            cmp AL, 024h
-            je compareNextChar
-            inc DI
+            cmp AL, 024h                            ;; Si llegamos al dolar, entonces nos vamos a compareNextChar para asegurarnos que llegamos al final de la línea de headers
+            je compareNextChar                      
+
+            inc DI                                  ;; Si fuese una letra, entonces seguimos avanzando en DI
             jmp advanceChar
 
         compareNextChar:
-            mov AL, [DI + 1]
-            cmp AL, 024h
+            mov AL, [DI + 1]                        ;; Preguntamos si DI + 1 es un $, si sí es un dolar, significa que es el fin de línea
+            cmp AL, 024h    
+
             je endOfLine
-            inc DI
-            jmp showHeader
+
+            inc DI                                  ;; Si es una letra, entonces mostramos nuevamente el header que le sigue, repetimos hasta llegar al final
+            jmp showHeader              
             
     endOfLine:
-        mov DL, 01h
+        mov DL, 01h                                 ;; Devolvemos mensaje de éxito
         jmp end
+
     fail:
         mov DL, 00h
     end:
