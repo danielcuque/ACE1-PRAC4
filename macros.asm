@@ -626,6 +626,7 @@ mReadHeadersCsv macro
 
     mPrintMsg newLine               ;; Imprimimos una nueva línea
     lea DI, fileLineBuffer          ;; Cargamos la direccion donde se van a guardar los headers del CSV
+    mov [indexForCol], 00h
 
     start:
         mov BX, [fileHandler]       ;; Le cargamos el fileHandler
@@ -678,22 +679,15 @@ mReadHeadersCsv macro
             push BX
             push AX
 
-                ; xor BX, BX
+                xor BX, BX
+                xor AX, AX
 
-                ; mov DI, offset bufferColumnsPosition
-                ; mov BX, offset colIndex
-                ; add DI, [BX]
+                mov BL, [indexForCol]
+                mov AL, [colValue]
+                mov bufferColumnsPosition[BX], AL
 
-                ; mov AX, offset colValue
-                ; mov [DI], AX
-
-                mov DI, offset colIndex 
-                mov AX, [DI]
-
-                mov numberGotten, 00h
-                mov numberGotten, AX
-                mPrintNumberConverted
-                mWaitEnter
+                inc BL
+                mov [indexForCol], BL
 
             pop AX
             pop BX                                  ;; Devolvemos sus valores a como estaban
@@ -781,18 +775,20 @@ endm
 
 mReadCellsCsv macro
     LOCAL start, end, fail, success
+
     push CX
     push AX
     push SI
 
     xor CX, CX
     lea SI, bufferColumnsPosition
+
     start:
-    
+
         mov AL, [SI]
         cmp AL, 24h
         je end
-
+        
         mPrintMsg testStr
         mWaitEnter
 
@@ -801,10 +797,9 @@ mReadCellsCsv macro
     success:
     fail:
     end:
-
-    pop SI
-    pop AX
-    pop CX
+        pop SI
+        pop AX
+        pop CX
     
 endm
 

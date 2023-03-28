@@ -72,13 +72,14 @@ colValue DB 0
 ; ------------------------------------
 ; Parametros para el comando IMPORTAR
 
-colIndex DB 0
 fileBuffer DB 102h dup(0)                       ;; Informacion del archivo
+indexForCol DB 0
 fileName DB 32h dup(0)                          ;; Nombre del archivo
 stop DB '$'
 fileHandler DW 0                                ;; Para el fileHandler
 
-bufferColumnsPosition DB 0Bh dup('$')             
+bufferColumnsPosition DB 0Bh dup('$')  
+          
 bufferGetPosColumn DB 03h dup(2, 0)             ;; Esta variable servirá para obtener la posición de la columna [0] = tamaño, [1] = bytes leídos, [2] = Columna
 letraColumna DB 'Letra de la columna para $'    ;; Mostramos el mensaje para agarrar 
 
