@@ -484,11 +484,11 @@ mImportar macro
         cmp DL, 00
         je fail
 
-        mCompareCommand PORTABCommand   ;; Comparamos que el comando esté completo
-        cmp DL, 00
-        je fail
+        ; mCompareCommand PORTABCommand   ;; Comparamos que el comando esté completo
+        ; cmp DL, 00
+        ; je fail
 
-        add SI, 011h                    ;; Aumentamos el contador de SI en 11 que es la cantida de palabras que tiene 'SEPARADO POR TAB'
+        ; add SI, 011h                    ;; Aumentamos el contador de SI en 11 que es la cantida de palabras que tiene 'SEPARADO POR TAB'
 
         mReadFile                       ;; Cargamos la información del archivo al buffer
         jmp end
@@ -626,7 +626,6 @@ mReadHeadersCsv macro
 
     mPrintMsg newLine               ;; Imprimimos una nueva línea
     lea DI, fileLineBuffer          ;; Cargamos la direccion donde se van a guardar los headers del CSV
-    mov [colValueIndex], 0          ;; Reiniciamos al index de la posición del buffer en 0
 
     start:
         mov BX, [fileHandler]       ;; Le cargamos el fileHandler
@@ -666,6 +665,7 @@ mReadHeadersCsv macro
         lea DI, fileLineBuffer          ;; Si todo salió bien, regresamos a DI a la posición incial del buffer para poder sacar la posición de la columna
 
         showHeader:
+            
             mPrintMsg letraColumna          ;; Imprimimos el mensaje para preguntar en qué columna quiere que se guarde el header
             mPrintPartialDirection DI       ;; Imprimimos la direccion de memoria que contiene los headers, como los tabs se cambiaron por dolares
                                             ;; Entonces se imprime header por header
@@ -674,19 +674,30 @@ mReadHeadersCsv macro
             je fail
 
             push DI                         ;; Guardamos los valores de DI y BX para poder usarlo
+            push SI
             push BX
-                
-                lea BX, bufferColumnsPosition       ;; Cargamos a BX la direccion de memoria que guarda en un arreglo las columnas que se van a usar
-                                                    ;; Por ejemplo, si el usuario ingreso -> A, C, E 
-                                                    ;; en el arreglo va a guardarse como  [0, 2, 4]
-                                                    ;; y las filas también se van a calcular en esa posición
-                lea DI, colValueIndex               ;; nos ayudamos de colValueIndex para correr una posición en el arreglo donde se guardan las columnas
-                add BX, DI                          ;; Le sumamos al indice donde debe posicionarse otra vez
+            push AX
 
-                lea DI, colValue                    ;; Cargamos el colValue que devuelve mRequestColum con mIsCell
-                mov [BX], DI                        ;; Introducimos el valor al arreglo, por ejemplo [0].append(2) = [0, 2]
+                ; xor BX, BX
 
+                ; mov DI, offset bufferColumnsPosition
+                ; mov BX, offset colIndex
+                ; add DI, [BX]
+
+                ; mov AX, offset colValue
+                ; mov [DI], AX
+
+                mov DI, offset colIndex 
+                mov AX, [DI]
+
+                mov numberGotten, 00h
+                mov numberGotten, AX
+                mPrintNumberConverted
+                mWaitEnter
+
+            pop AX
             pop BX                                  ;; Devolvemos sus valores a como estaban
+            pop SI
             pop DI
         
             mPrintMsg newLine                       ;; Mostramos una nueva línea
@@ -771,22 +782,28 @@ endm
 mReadCellsCsv macro
     LOCAL start, end, fail, success
     push CX
+    push AX
     push SI
 
     xor CX, CX
-    lea DI, colsReaded
-    mov CX, DI
-
+    lea SI, bufferColumnsPosition
     start:
+    
+        mov AL, [SI]
+        cmp AL, 24h
+        je end
+
         mPrintMsg testStr
-        
-        loop start
-        
+        mWaitEnter
+
+        inc SI
+        jmp start
     success:
     fail:
     end:
 
     pop SI
+    pop AX
     pop CX
     
 endm
@@ -1065,6 +1082,29 @@ mEmptyBuffer macro buffer
     add SI, 02
 
     mov AL, 24h
+
+    emptyBuffer:
+        mov [SI], AL
+        inc SI
+        loop emptyBuffer
+
+    pop DX
+    pop CX
+    pop SI
+endm
+
+mEmptyBufferWithZero macro buffer
+    LOCAL emptyBuffer
+    push SI
+    push CX
+    push AX
+
+    mov SI, offset buffer
+    mov CL, [SI]
+    mov CH, 00
+    add SI, 02
+
+    mov AL, 00h
 
     emptyBuffer:
         mov [SI], AL
