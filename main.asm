@@ -106,7 +106,7 @@ errorArgsStr DB 'Faltan argumentos en la funcion  $'
 errrorValueArgs DB 'Valores incorrectos $' 
 errorFileNotFound DB 'No se pudo encontrar el archivo $'
 errorSizeOfNumber DB 'Numero demasiado grande $'
-errorHeadersStr DB 'Columna Incorrecta', 0Dh, 0Ah, '$'
+errorHeadersStr DB 'Columna Incorrecta $'
 errorCloseFile DB 'Error al cerrar el archivo', 0Dh, 0Ah, '$'
 errorOpenFile DB  'Error al abrir el archivo', 0Dh, 0Ah, '$'
 ; ------------------------------------

@@ -494,6 +494,7 @@ mImportar macro
         jmp end
 
     fail:
+        mPrintMsg newLine
         mPrintMsg errorArgsStr
         mPrintMsg IMPORTARCommand
         mPrintMsg newLine
@@ -552,13 +553,14 @@ mReadFile macro
     xor CX, CX
 
     mResetVar fileBuffer                ;; Reiniciamos nuestro buffer
-    mov DX, offset fileName  
+    mov DX, offset fileName             ;; Obtenemos la posicion de memoria del nombre del archivo
 
     mov AL, 00                          ;; Modo de lectura
     mov AH, 3dh                         ;; Función para abrir el archivo
-    int 21h
-    jc errorToOpen
-    mov [fileHandler], AX
+    int 21h                             ;; Provocamos la interrupción
+    jc errorToOpen                      ;; Si el archivo no se puede abrir bien, entonces marcamos error
+
+    mov [fileHandler], AX               ;; Cargamos el handle a una variable
 
     mReadHeadersCsv                     ;; Leemos los headers
     cmp DL, 00                          ;; Si devuelve error, entonces no continuamos
@@ -576,19 +578,13 @@ mReadFile macro
         mPrintMsg errorCloseFile        ;; Mostramos un error que no se pudo cerrar el archivo
     fail:
         mov DL, 00                      ;; Marcamos a DL con 0 para indicar que no se leyó bien el archivo
-        mPrintMsg testStr
-        mPrintCarryFlag
         mWaitEnter
         jmp end
 
     errorHeaders:                       ;; Para este caso si es necesario cerrar el archivo, ya que los las columnas están mal introducidas pero el archivo sí se abrió
-        mov BX, [fileHandler]           ;; Devolvemos al handle a BX para cerrarlo    
-        mov AH, 03Eh                    ;; Cargamos a AH para hacer la interrupción de cerrar archivo
-        int 21h
-        jc errorToClose                 ;; En dado caso no se pueda cerrar bien, mostramos el error
-
+        mPrintMsg newLine
         mPrintMsg errorHeadersStr       ;; Mostramos error de ingreso de columnas
-        jc fail
+        jmp fail
     
     success:
         mov DL, 01                      ;; Si todo sale bien, marcamos a DL como 01
@@ -619,10 +615,12 @@ mReadHeadersCsv macro
     push DI
     push AX
 
-    lea DI, fileLineBuffer
-    mov [colValueIndex], 0
+    mPrintMsg newLine               ;; Imprimimos una nueva línea
+    lea DI, fileLineBuffer          ;; Cargamos la direccion donde se van a guardar los headers del CSV
+    mov [colValueIndex], 0          ;; Reiniciamos al index de la posición del buffer en 0
+
     start:
-        mov BX, [fileHandler] 
+        mov BX, [fileHandler]       ;; Le cargamos el file 
         mov CX, 1                   ;; Read 1 byte
         mov DX, DI                  ;; Buffer
         mov AH, 3fh
