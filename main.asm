@@ -84,6 +84,7 @@ bufferGetPosColumn DB 03h dup(2, 0)             ;; Esta variable servirá para o
 letraColumna DB 'Letra de la columna para $'    ;; Mostramos el mensaje para agarrar 
 
 fileLineBuffer DB 100h dup('$')
+
 bufferPrintOneChar DB 02h dup('$')
 
 ; ------------------------------------

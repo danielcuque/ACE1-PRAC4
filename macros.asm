@@ -320,7 +320,8 @@ mIsCell macro
         mov [DI], AX                              ;; Le asignamos el valor calculado de AX
         mov DL, 01                                ;; si todo sale bien, devolvemos 01
     
-    end: 
+    end:
+
     pop CX
     pop BX
     pop AX
@@ -566,10 +567,10 @@ mReadFile macro
     cmp DL, 00                          ;; Si devuelve error, entonces no continuamos
     je errorHeaders
 
-    mReadCellsCsv
+    mGetLineFromCsv
     cmp DL, 00
     je errorCells
-
+    
     ;; En esta sección ya podemos usar la info cargada al buffer
     mov DL, 01
     jmp success
@@ -625,13 +626,16 @@ mReadHeadersCsv macro
     push AX
 
     mPrintMsg newLine               ;; Imprimimos una nueva línea
+
+    mResetVar fileLineBuffer        ;; Reiniciamos nuestro buffer que va a contener las líneas
     lea DI, fileLineBuffer          ;; Cargamos la direccion donde se van a guardar los headers del CSV
+
     mov [indexForCol], 00h
 
     start:
         mov BX, [fileHandler]       ;; Le cargamos el fileHandler
         mov CX, 1                   ;; Vamos a leer byte a byte, por lo que CX es 1
-        mov DX, DI                  ;; Cargamos a DX la direccion del primer caracter de los headers
+        mov DX, DI                  ;; Cargamos a DX la direccion donde se va a almacenar los headers
 
         mov AH, 3Fh                 ;; Con 3Fh empezamos a leer la información del archivo     
         int 21                      
@@ -717,6 +721,14 @@ mReadHeadersCsv macro
             jmp showHeader              
             
     endOfLine:
+        mov BX,[fileHandler]
+        mov CX, 1
+        mov DX, DI
+        
+        mov AH, 3Fh
+        int 21
+        jc fail
+
         mov DL, 01h                                 ;; Devolvemos mensaje de éxito
         jmp end
 
@@ -773,34 +785,62 @@ mPrintOneChar macro char
     pop DI
 endm
 
-mReadCellsCsv macro
-    LOCAL start, end, fail, success
+;; Si DX devuelve 1, significa que se leyó bien la línea
+;; Si DX devuelve 2, significa que se llegó al final del archivo
 
-    push CX
+mGetLineFromCsv macro
+    LOCAL start, end, fail, endOfFile, endOfLine
+
     push AX
-    push SI
+    push DI
 
-    xor CX, CX
-    lea SI, bufferColumnsPosition
+    mResetVar fileLineBuffer        ;; Reiniciamos nuestro buffer que va a contener las líneas
+    lea DI, fileLineBuffer
 
     start:
 
-        mov AL, [SI]
-        cmp AL, 24h
-        je end
-        
-        mPrintMsg testStr
-        mWaitEnter
+        mov BX, [fileHandler]       ;; Movemos a BX le atributo del handler
+        mov CX, 1                   ;; Leemos caracter por caracter
+        mov DX, DI
 
-        inc SI
+        mov AH, 3Fh                 ;; Usamos la interrupción para leer el archivo
+        int 21h                     ;; 
+        jc fail                     ;; Si no se puede leer el archivo, nos saltamos a fail
+
+        cmp AX, 0
+        je endOfFile
+
+        mov AL, [DI]                ;;
+
+        cmp AL, 0Dh                 ;; Si llegamos al retorno de carro, significa que llegamos al final de línea
+        je endOfLine                ;; Si encuentra un retorno de carro, signifca que terminó la línea
+
+        cmp AL, 00h                 ;; También podemos indicar que si encontró un caracter nulo, se terminó la fila
+        je endOfLine
+
+        cmp AL, 0Ah                 ;; O si encuentra un salto de línea, significa que terminó
+        je endOfLine
+
+        mov [DI], AL
+        inc DI
         jmp start
-    success:
+
+    endOfLine:
+        mov DL, 01h
+        jmp end
+    endOfFile:
+        mov DL, 02h
+        jmp end
     fail:
+        mov DL, 01h
     end:
-        pop SI
+        pop DI
         pop AX
-        pop CX
-    
+endm
+
+mProcessCell macro
+
+
 endm
 
 mTruncateFile macro
