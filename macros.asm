@@ -566,6 +566,10 @@ mReadFile macro
     cmp DL, 00                          ;; Si devuelve error, entonces no continuamos
     je errorHeaders
 
+    mReadCellsCsv
+    cmp DL, 00
+    je errorCells
+
     ;; En esta sección ya podemos usar la info cargada al buffer
     mov DL, 01
     jmp success
@@ -585,6 +589,11 @@ mReadFile macro
         mPrintMsg newLine               ;; Mostramos el error en una nueva línea
         mPrintMsg errorHeadersStr       ;; Mostramos error de ingreso de columnas
         jmp fail                        ;; Seteamos a DL como error (00)
+    
+    errorCells:
+        mPrintMsg newLine
+        mPrintMsg errorCellsStr
+        jmp fail
     
     success:
         mov DL, 01                      ;; Si todo sale bien, marcamos a DL como 01
@@ -666,7 +675,7 @@ mReadHeadersCsv macro
 
             push DI                         ;; Guardamos los valores de DI y BX para poder usarlo
             push BX
-
+                
                 lea BX, bufferColumnsPosition       ;; Cargamos a BX la direccion de memoria que guarda en un arreglo las columnas que se van a usar
                                                     ;; Por ejemplo, si el usuario ingreso -> A, C, E 
                                                     ;; en el arreglo va a guardarse como  [0, 2, 4]
@@ -698,8 +707,8 @@ mReadHeadersCsv macro
             cmp AL, 024h    
 
             je endOfLine
-
             inc DI                                  ;; Si es una letra, entonces mostramos nuevamente el header que le sigue, repetimos hasta llegar al final
+            
             jmp showHeader              
             
     endOfLine:
@@ -714,6 +723,7 @@ mReadHeadersCsv macro
 endm
 
 
+
 ;; DL == 0, no existe la columna
 ;; DL == 1, es correcta
 mRequestColumn macro
@@ -722,16 +732,16 @@ mRequestColumn macro
     push CX
     push SI
 
-    mEmptyBuffer keyBoardBuffer
+    mEmptyBuffer bufferGetPosColumn     ;; Vaciamos el buffer para poder leer el valor de la columna
 
-    mPrintMsg colonChar
+    mPrintMsg colonChar                 
 
-    lea DX, bufferGetPosColumn
-    mov AH, 0Ah
+    lea DX, bufferGetPosColumn          ;; Nos posicionamos en la memoria del buffer de la columna
+    mov AH, 0Ah                         ;; Provocamos la interrupción
     int 21h
     
-    add DX, 02h
-    mov SI, DX
+    add DX, 02h                         ;; Avanzamos 2 bytes para poder leer el caracter
+    mov SI, DX                          ;; Cargamos ese caracter a SI
 
     mIsLetter
     cmp DL, 00
@@ -760,12 +770,25 @@ endm
 
 mReadCellsCsv macro
     LOCAL start, end, fail, success
-    push DI
+    push CX
+    push SI
+
+    xor CX, CX
+    lea DI, colsReaded
+    mov CX, DI
+
     start:
+        mPrintMsg testStr
+        
+        loop start
+        
     success:
     fail:
     end:
-    pop DI
+
+    pop SI
+    pop CX
+    
 endm
 
 mTruncateFile macro
@@ -778,7 +801,7 @@ mTruncateFile macro
 
     int 21h
 
-    JC failed
+    jc failed
 
     mov fileHandler, AX
     jmp end:

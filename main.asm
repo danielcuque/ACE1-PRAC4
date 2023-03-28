@@ -85,6 +85,9 @@ letraColumna DB 'Letra de la columna para $'    ;; Mostramos el mensaje para aga
 fileLineBuffer DB 100h dup('$')
 bufferPrintOneChar DB 02h dup('$')
 
+
+colsReaded DB 0
+
 ; ------------------------------------
 ; Buffer del teclado
 
@@ -107,6 +110,7 @@ errrorValueArgs DB 'Valores incorrectos $'
 errorFileNotFound DB 'No se pudo encontrar el archivo $'
 errorSizeOfNumber DB 'Numero demasiado grande $'
 errorHeadersStr DB 'Columna Incorrecta $'
+errorCellsStr DB 'Error al leer las celdas $'
 errorCloseFile DB 'Error al cerrar el archivo', 0Dh, 0Ah, '$'
 errorOpenFile DB  'Error al abrir el archivo', 0Dh, 0Ah, '$'
 ; ------------------------------------
