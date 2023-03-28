@@ -46,7 +46,6 @@ mStartProgram macro
         cmp isRunProgram, 00h
         je startProgram
     exitProgram:
-        mPrintMsg colonChar
         mExit
 endm
 
@@ -454,37 +453,42 @@ mImportar macro
     push DI
 
     add SI, 08h                         ;; Aumentamos en 8 posiciones el índice SI que lleva el control del buffer del teclado
+                                        ;; Para este punto, SI está en la posición del primer espacio después
+                                        ;; del comando IMPORTAR
 
     mSkipWhiteSpace                     ;; Nos saltamos el espacio en blanco para llegar al nombre del archivo
     cmp DL, 00                          ;; Si el buffer no es nulo, entonces continuamos
     je fail
 
-    mResetVar fileName                  ;; Reiniciamos el nombre del archivo
+    mResetVarWithZero fileName                  ;; Reiniciamos el nombre del archivo
     lea BX, fileName                    ;; Obtenemos la direccion de memoria del archivo
 
     readFileName:
         mov AL, [SI]
 
-        cmp AL, 0Dh                     ;; Significa que al comando le faltan argumentos
+        cmp AL, 00                     ;; Significa que al comando le faltan argumentos
         je fail
 
         cmp AL, 20h                     ;; Si es un espacio, significa que ya terminamos de leer el nombre
         je start                        ;; Deja a SI en el primer espacio después del nombre del archivo
 
         mov [BX], AL                    ;; Obtenemos el valor que está en SI y lo metemos al nombre del archivo
+
         inc BX                          ;; Incrementamos BX para avanzar a la siguiente posición
         inc SI                          ;; Incrementamos SI para avanzar en el buffer
         jmp readFileName 
 
     start:
 
-        mSkipWhiteSpace
+        mSkipWhiteSpace                 ;; Nos saltamos los espacios para poder avanzar a la ultima declaración de los comandos
         cmp DL, 00
         je fail
 
-        mCompareCommand PORTABCommand
+        mCompareCommand PORTABCommand   ;; Comparamos que el comando esté completo
         cmp DL, 00
         je fail
+
+        add SI, 011h                    ;; Aumentamos el contador de SI en 11 que es la cantida de palabras que tiene 'SEPARADO POR TAB'
 
         mReadFile                       ;; Cargamos la información del archivo al buffer
         jmp end
@@ -494,7 +498,6 @@ mImportar macro
         mPrintMsg IMPORTARCommand
         mPrintMsg newLine
         mWaitEnter
-    
 
     end:
     pop DI
@@ -510,7 +513,26 @@ mResetVar macro var
 
     lea DI, var
     mov CX, sizeof var
-    mov AX, 24h
+    mov AL, 024h
+    start:
+        mov [DI], AL
+        inc DI
+    loop start
+
+    pop DI
+    pop AX
+    pop CX
+endm
+
+mResetVarWithZero macro var
+    LOCAL start
+    push CX
+    push AX
+    push DI
+
+    lea DI, var
+    mov CX, sizeof var
+    mov AL, 00h
     start:
         mov [DI], AL
         inc DI
@@ -530,8 +552,8 @@ mReadFile macro
     xor CX, CX
 
     mResetVar fileBuffer                ;; Reiniciamos nuestro buffer
-    
-    mov DX, offset fileName           
+    mov DX, offset fileName  
+
     mov AL, 00                          ;; Modo de lectura
     mov AH, 3dh                         ;; Función para abrir el archivo
     int 21h
@@ -554,6 +576,9 @@ mReadFile macro
         mPrintMsg errorCloseFile        ;; Mostramos un error que no se pudo cerrar el archivo
     fail:
         mov DL, 00                      ;; Marcamos a DL con 0 para indicar que no se leyó bien el archivo
+        mPrintMsg testStr
+        mPrintCarryFlag
+        mWaitEnter
         jmp end
 
     errorHeaders:                       ;; Para este caso si es necesario cerrar el archivo, ya que los las columnas están mal introducidas pero el archivo sí se abrió
@@ -580,6 +605,14 @@ mReadFile macro
         pop AX
 endm
 
+mPrintCarryFlag macro
+    push BX
+    mov BX, 00
+    mov [numberGotten], BX
+    mov byte ptr [numberGotten], AL
+    mPrintNumberConverted
+    pop BX
+endm
 
 mReadHeadersCsv macro
     LOCAL start, changeChar, showHeader, compareNextChar, endOfLine, continue, end, fail, success

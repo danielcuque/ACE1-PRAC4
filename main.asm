@@ -17,7 +17,7 @@ HASTACommand DB 05h,'HASTA'
 DESDECommand DB 05h,'DESDE'
 HACIACommand DB 05h,'HACIA'
 SALIRCommand DB 05h, 'SALIR'
-PORTABCommand DB 017h,'SEPARADOR POR TABULADOR'
+PORTABCommand DB 016h,'SEPARADO POR TABULADOR', '$'
 ; ------------------------------------
 
 ; ------------------------------------
@@ -45,7 +45,7 @@ MAXIMOCommand DB 06h,'MAXIMO'
 ; Comandos para operaciones sobre ficheros
 IMPORTARCommand DB 08h,'IMPORTAR', '$'
 EXPORTARCommand DB 08h,'EXPORTAR'
-TABULADORCommand DB 09h
+
 ; ------------------------------------
 
 ; ------------------------------------
@@ -88,7 +88,7 @@ bufferPrintOneChar DB 02h dup('$')
 ; ------------------------------------
 ; Buffer del teclado
 
-colonChar DB ': $'
+colonChar DB ':$'
 currentCommandId DB 00h
 isRunProgram DB 00h
 keyBoardBuffer DB 102h dup (0ff, 0)
