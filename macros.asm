@@ -553,7 +553,6 @@ mReadFile macro
 
     xor CX, CX
 
-    mResetVar fileBuffer                ;; Reiniciamos nuestro buffer
     mov DX, offset fileName             ;; Obtenemos la posicion de memoria del nombre del archivo
 
     mov AL, 00                          ;; Modo de lectura
@@ -567,7 +566,7 @@ mReadFile macro
     cmp DL, 00                          ;; Si devuelve error, entonces no continuamos
     je errorHeaders
 
-    mGetLineFromCsv
+    mProcessCell
     cmp DL, 00
     je errorCells
     
@@ -826,6 +825,14 @@ mGetLineFromCsv macro
         jmp start
 
     endOfLine:
+        mov BX,[fileHandler]
+        mov CX, 1
+        mov DX, DI
+        
+        mov AH, 3Fh
+        int 21
+        jc fail
+
         mov DL, 01h
         jmp end
     endOfFile:
@@ -834,13 +841,30 @@ mGetLineFromCsv macro
     fail:
         mov DL, 01h
     end:
+
         pop DI
         pop AX
 endm
 
 mProcessCell macro
+    LOCAL start, end, endOfFile, fail
 
+    start:
+        mGetLineFromCsv
 
+        cmp DL, 02h
+        je endOfFile
+
+        jmp start
+
+    endOfFile:
+        mov DL, 01
+        jmp end
+
+    fail:
+        mov DL, 00
+
+    end:
 endm
 
 mTruncateFile macro

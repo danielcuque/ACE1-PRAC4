@@ -71,8 +71,7 @@ cellPosition DW 0
 colValue DB 0
 ; ------------------------------------
 ; Parametros para el comando IMPORTAR
-
-fileBuffer DB 102h dup(0)                       ;; Informacion del archivo
+                     
 indexForCol DB 0
 fileName DB 32h dup(0)                          ;; Nombre del archivo
 stop DB '$'
