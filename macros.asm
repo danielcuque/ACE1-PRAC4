@@ -253,23 +253,25 @@ mPrintSIIndex macro
 endm
 
 mEvaluateGuardarArg2 macro
-    LOCAL start, end, error
+    LOCAL end, error
     push AX
     push BX
 
     xor AX, AX
-    start:
+    xor DX, DX
 
-        mIsCell 
-        cmp DL, 00
-        je error
+    mIsCell 
+    cmp DL, 01
+    jne error
 
-        mov BX, [cellPosition]                  ;; Le cargo la posicion
-        mov AX, [guardarParametroNumero]        ;; Cargamos el valor que se quiere guardar, ya sea numero, * o celda
-        mov mainTable[BX], AX                   ;; Insertamos ese valor en dicha celda
+    
 
-        mov DL, 01
-        jmp end
+    mov BX, [cellPosition]                  ;; Le cargo la posicion
+    mov AX, [guardarParametroNumero]        ;; Cargamos el valor que se quiere guardar, ya sea numero, * o celda
+    mov mainTable[BX], AX                   ;; Insertamos ese valor en dicha celda
+
+    mov DL, 01
+    jmp end
 
     error:
         mov DL, 00
@@ -307,8 +309,8 @@ mIsCell macro
     je isNot
     
     mIsNumber               ;; Ahora verificamos el numero, si si es numero, avanzamos
-    cmp DL, 00h
-    je isNot                ;; Aqui ponemos jne para no toparnos con el isNot
+    cmp DL, 01h
+    jne isNot                ;; Aqui ponemos jne para no toparnos con el isNot
 
     ;; (Fila * 11 + Col) * 2
     ;; Para este punto, tenemos el valor de la fila en recoveredStr y necesitamos convertila a numero
@@ -382,7 +384,6 @@ mIsNumber macro
                 
     xor CX, CX              ;; Este llevara el control de cuantas posiciones aumentar en SI en caso de que sí sea necesario
     xor BX, BX
-    mov DL, 00
     xor AX, AX
 
     mov BX, SI              ;; Copiamos la direccion de memoria de SI para no modificar SI si no es necesario
@@ -521,7 +522,7 @@ mImportar macro
         cmp DL, 00
         je fail
 
-        add SI, 011h                    ;; Aumentamos el contador de SI en 11 que es la cantida de palabras que tiene 'SEPARADO POR TAB'
+        ; add SI, 011h                    ;; Aumentamos el contador de SI en 11 que es la cantida de palabras que tiene 'SEPARADO POR TAB'
 
         mReadFile                       ;; Cargamos la información del archivo al buffer
         jmp end
@@ -936,7 +937,7 @@ mProcessCell macro
 
         mov [colCounter], 00                          ;; BX nos va a servir para poder saber en qué posición se debe insertar el numero
 
-        lea SI, fileLineBuffer              ;; Vamos a obtener la la fila para procesarla con el isNumForCell
+        mov SI, offset fileLineBuffer              ;; Vamos a obtener la la fila para procesarla con el isNumForCell
 
         push DX
         proccesPosition:

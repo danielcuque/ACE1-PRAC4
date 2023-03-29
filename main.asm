@@ -17,7 +17,7 @@ HASTACommand DB 05h,'HASTA'
 DESDECommand DB 05h,'DESDE'
 HACIACommand DB 05h,'HACIA'
 SALIRCommand DB 05h, 'SALIR'
-PORTABCommand DB 016h,'SEPARADO POR TABULADOR', '$'
+PORTABCommand DB 016h,'SEPARADO POR TABULADOR'
 ; ------------------------------------
 
 ; ------------------------------------
