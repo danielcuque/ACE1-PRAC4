@@ -96,7 +96,7 @@ bufferPrintOneChar DB 02h dup('$')
 colonChar DB ':$'
 currentCommandId DB 00h
 isRunProgram DB 00h
-keyBoardBuffer DB 102h dup (0ff, 0)
+keyBoardBuffer DB 102h dup (0ff, '$')
 
 ; ------------------------------------
 ; Parametros para GUARDAR

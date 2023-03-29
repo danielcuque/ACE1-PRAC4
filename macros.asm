@@ -88,6 +88,10 @@ mEvaluatePrompt macro
     cmp DL, 00
     jne exeMul
 
+    mCompareCommand DIVIDIRCommand
+    cmp DL, 00
+    jne exeDiv
+
     jmp commandNotFound
 
     exeSalir:
@@ -105,16 +109,16 @@ mEvaluatePrompt macro
         mImportar
         jmp endEvaluate
 
-    exeSuma:
-        mSuma
-        jmp endEvaluate
-
     exeResta:
         mResta
         jmp endEvaluate
 
     exeMul:
         mMul
+        jmp endEvaluate
+
+    exeDiv:
+        mDiv
         jmp endEvaluate
     
     commandNotFound:
@@ -203,6 +207,7 @@ mEvaluateGuardarArg1 macro
         mIsCell
         cmp DL, 00
         jne isCell
+        jmp errorEvaluateArg
     
     isAsterisk:
         mov DI, offset returnValue          ;; Apuntamos a la variable que tiene el valor de retorno
@@ -218,12 +223,12 @@ mEvaluateGuardarArg1 macro
     isCell:
         push SI
 
-        mov DI, offset cellPosition
-        mov AX, [DI]
-        mov SI, offset mainTable
-        add SI, AX
-        mov BX, [SI]
-        mov [guardarParametroNumero], BX
+            mov DI, offset cellPosition
+            mov AX, [DI]
+            mov SI, offset mainTable
+            add SI, AX
+            mov BX, [SI]
+            mov [guardarParametroNumero], BX
         
         pop SI
         jmp end
@@ -260,8 +265,8 @@ mEvaluateGuardarArg2 macro
         je error
 
         mov BX, [cellPosition]                  ;; Le cargo la posicion
-        mov AX, [guardarParametroNumero]        ;; 
-        mov mainTable[BX], AX
+        mov AX, [guardarParametroNumero]        ;; Cargamos el valor que se quiere guardar, ya sea numero, * o celda
+        mov mainTable[BX], AX                   ;; Insertamos ese valor en dicha celda
 
         mov DL, 01
         jmp end
@@ -287,7 +292,7 @@ endm
 ;; El indice SI lleva el control del buffer
 
 mIsCell macro
-    LOCAL start, end, isNot, success
+    LOCAL end, isNot
     push AX
     push BX
     push CX
@@ -297,49 +302,45 @@ mIsCell macro
     mov BX, SI              ;; Primer caracter de la celda teoricamente, si la celda es A22, está posicionado en A
 
         
-    start:
-        mIsLetter           ;; Si empieza con letra, puede ser una dirección de celda
-        cmp DL, 00          ;; Si la funcion devuelve 00 significa que no es
-        je isNot
+    mIsLetter               ;; Si empieza con letra, puede ser una dirección de celda
+    cmp DL, 00              ;; Si la funcion devuelve 00 significa que no es
+    je isNot
+    
+    mIsNumber               ;; Ahora verificamos el numero, si si es numero, avanzamos
+    cmp DL, 00h
+    je isNot                ;; Aqui ponemos jne para no toparnos con el isNot
 
-        
-        mIsNumber           ;; Ahora verificamos el numero, si si es numero, avanzamos
-        cmp DL, 00
-        jne success         ;; Aqui ponemos jne para no toparnos con el isNot
-        
+    ;; (Fila * 11 + Col) * 2
+    ;; Para este punto, tenemos el valor de la fila en recoveredStr y necesitamos convertila a numero
+    ;; El valor de la columna está en colValue
+    
+    xor DX, DX
+    mov AX, 0Bh                               ;; A CX le cargo el valor de 11
+    mov BX, [numberGotten]                    ;; Obtengo el valor de la Fila
+    mul BX                                    ;; Aquí tengo el valor de Fila * 11
+    
+    mov DI, offset colValue                   ;; Obtengo la dirección del valor de la columna
+    mov BX, [DI]
+    add AX, BX                                ;; Le sumamos el valor de la columna
+
+    mov BX, 02h                               ;; Le cargo a BX el valor de 02 para multiplicarlo después
+    mul BX
+
+    cmp AX, 01FAh
+    ja isNot
+
+    mov DI, offset cellPosition               ;; Obtenemos la posición de memoria de la variable que guarda la posición del tablero
+    mov [DI], AX                              ;; Le asignamos el valor calculado de AX
+    mov DL, 01                                ;; si todo sale bien, devolvemos 01
+    jmp end
+
     isNot:
         mov DL, 00
-        jmp end
-
-    success:
-        ;; (Fila * 11 + Col) * 2
-        ;; Para este punto, tenemos el valor de la fila en recoveredStr y necesitamos convertila a numero
-        ;; El valor de la columna está en colValue
-        
-        xor DX, DX
-        mov AX, 0Bh                               ;; A CX le cargo el valor de 11
-        mov BX, [numberGotten]                    ;; Obtengo el valor de la Fila
-        mul BX                                    ;; Aquí tengo el valor de Fila * 11
-        
-        mov DI, offset colValue                   ;; Obtengo la dirección del valor de la columna
-        mov BX, [DI]
-        add AX, BX                                ;; Le sumamos el valor de la columna
-
-        mov BX, 02h                               ;; Le cargo a BX el valor de 02 para multiplicarlo después
-        mul BX
-
-        cmp AX, 01FAh
-        ja isNot
-
-        mov DI, offset cellPosition               ;; Obtenemos la posición de memoria de la variable que guarda la posición del tablero
-        mov [DI], AX                              ;; Le asignamos el valor calculado de AX
-        mov DL, 01                                ;; si todo sale bien, devolvemos 01
     
     end:
-
-    pop CX
-    pop BX
-    pop AX
+        pop CX
+        pop BX
+        pop AX
 endm
 
 mIsLetter macro
@@ -379,10 +380,16 @@ mIsNumber macro
     push CX
     push DI
                 
-    mov CX, 00              ;; Este llevara el control de cuantas posiciones aumentar en SI en caso de que sí sea necesario
+    xor CX, CX              ;; Este llevara el control de cuantas posiciones aumentar en SI en caso de que sí sea necesario
+    xor BX, BX
+    mov DL, 00
+    xor AX, AX
+
     mov BX, SI              ;; Copiamos la direccion de memoria de SI para no modificar SI si no es necesario
-    mov DL, 01h             ;; Cargamos en un inicio a DL con 01 para indicar que es verdadero
+    
+    
     start:
+
         mov AL, [BX]
     
         cmp AL, 20h         ;; Si llegamos al espacio y todo está correcto, entonces generamos el numero
@@ -392,6 +399,12 @@ mIsNumber macro
         je success
 
         cmp AL, 0Dh         ;; O comparamos que no sea un valor de retorno
+        je success
+
+        cmp AL, 0Ah         ;; O si encuentra un salto de línea, significa que terminó
+        je success
+
+        cmp AL, 24h         ;; O si encuentra un salto de línea, significa que terminó
         je success
  
         cmp AL, 30h         ;; Comparamos que el ASCII no sea menor al ASCII DE 1
@@ -411,7 +424,7 @@ mIsNumber macro
     success:
         xor AX, AX                          ;; Limpiamos a AX
         mov BX, offset recoveredStr      ;; Movemos la direccion de memoria del número a recuperar para insertarle datos
-        
+
         cmp CX, 07h                         ;; Si el número es mayor a 5, significa que no es válido
         jl generateNumber                   ;; Si es menor a 5, entonces recuperamos el número
 
@@ -422,12 +435,16 @@ mIsNumber macro
             mResetrecoveredStr
 
             createNumber:
+
                 mov AL, [SI]                    ;; Movemos el valor que se encuentra en SI a AX, por ejemplo, si en Si está 1, entonces lo movemos
                 mov [BX], AL                    ;; Le insertamos ese valor a la variable de recoveredStr
                 inc BX                          ;; Incrementamos DI
                 inc SI                          ;; Incrementamos SI, para avanzar en el buffer
                 loop createNumber               ;; Ciclamos
                 mStringToNum                    ;; Convertimos el String a número
+
+        mov DL, 01h             ;; Cargamos en un inicio a DL con 01 para indicar que es verdadero
+
     end:
     pop DI
     pop CX
@@ -924,7 +941,7 @@ mProcessCell macro
         push DX
         proccesPosition:
 
-            mIsNumberForCell                ;; Preguntamos si la celda es un número
+            mNumberForCell                ;; Preguntamos si la celda es un número
             cmp DL, 00h                     ;; O si devuelve que no es un número, entonces marcamos error
             je fail
 
@@ -1034,7 +1051,7 @@ mShowTest macro
 endm
 
 ;; Este macro avanza en la posición del buffer en el que se carga
-mIsNumberForCell macro
+mNumberForCell macro
     LOCAL start, createNumber, success, isNot, end, generateNumber
     push AX
     push BX
@@ -1101,7 +1118,7 @@ mIsNumberForCell macro
                 inc BX                          ;; Incrementamos DI
                 inc SI                          ;; Incrementamos SI, para avanzar en el buffer
                 loop createNumber               ;; Ciclamos
-            mStringToNum                    ;; Convertimos el String a número
+                mStringToNum                    ;; Convertimos el String a número
 
     end:
         pop DI
