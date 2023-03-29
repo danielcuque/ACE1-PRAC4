@@ -820,12 +820,12 @@ mGetLineFromCsv macro
         cmp AL, 0Ah                 ;; O si encuentra un salto de línea, significa que terminó
         je endOfLine
 
-        mov [DI], AL
-        inc DI
+        mov [DI], AL                ;; Copiamos el valor a DI para guardarlo en el buffer
+        inc DI                      ;; Incrementamos la posicion de DI donde se va a guardar
         jmp start
 
     endOfLine:
-        mov BX,[fileHandler]
+        mov BX,[fileHandler]        ;; Leemos un byte más para saltarnos al siguiente caracter
         mov CX, 1
         mov DX, DI
         
@@ -835,13 +835,14 @@ mGetLineFromCsv macro
 
         mov DL, 01h
         jmp end
+
     endOfFile:
-        mov DL, 02h
+        mov DL, 02h                 ;; Para indicar que el archivo se acabó, cargamos a DL con 02
         jmp end
+
     fail:
         mov DL, 01h
     end:
-
         pop DI
         pop AX
 endm
@@ -850,37 +851,54 @@ mProcessCell macro
     LOCAL start, end, endOfFile, continue, proccesPosition, fail
     push SI
     push CX
+    push BX
     push AX
 
     xor AX, AX
+    xor BX, BX
+    
     start:
         mGetLineFromCsv
 
-        mov CX, 00                 ;; CX nos va a servir para poder saber en qué posición se debe insertar el numero
+        mov CX, 00                          ;; CX nos va a servir para poder saber en qué posición se debe insertar el numero
 
-        lea SI, fileLineBuffer
+        lea SI, fileLineBuffer              ;; Vamos a obtener la la fila para procesarla con el isNumForCell
 
         push DX
+        push DI
+
         proccesPosition:
 
-            mIsNumberForCell        ;; Preguntamos si la celda es un número
-            cmp DL, 00h              ;; O si devuelve que no es un número, entonces marcamos error
+            mIsNumberForCell                ;; Preguntamos si la celda es un número
+            cmp DL, 00h                     ;; O si devuelve que no es un número, entonces marcamos error
             je fail
 
             ;; Si todo está bien, entonces vamos a utilizar el número
+            ;; Vamos a insertar numero por número bajo la siguiente lógica
+            ;; CX va a indicar en que numero de fila se debe de meter la celda,
+            ;; por lo que cada vez que se cambie de fila, se aumenta en 1
+            ;; Cada vez que se lea una línea, CX empezará en 0
+            ;; A su vez, BX va a acceder a las posiciones de memoria de la columna
+            ;; Para que la posicion de la celda va a ser (CX, buffer[BX])
             
-            cmp DL, 02              ;; Avanza de posición hasta que termina con $$$ 
-            je continue             ;; Y evaluamos la siguiente línea
+            lea DI, bufferColumnsPosition   ;; Cargamos la posición de memoria en la que se guardan las posiciones de la columna
+            
 
+            
+            cmp DL, 02                      ;; Avanza de posición hasta que termina con $$$ 
+            je continue                     ;; Y evaluamos la siguiente línea
             inc SI                          ;; Nos saltamos el tabulador que viene después del número
-
+            inc CX
             jmp proccesPosition
+
         continue:
+            pop DI
             pop DX
 
             cmp DL, 02
             je endOfFile
 
+            inc BX
             jmp start
 
     endOfFile:
@@ -892,6 +910,7 @@ mProcessCell macro
 
     end:
         pop AX
+        pop BX
         pop CX
         pop SI
 endm
