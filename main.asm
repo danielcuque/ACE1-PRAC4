@@ -46,6 +46,8 @@ MAXIMOCommand DB 06h,'MAXIMO'
 IMPORTARCommand DB 08h,'IMPORTAR', '$'
 EXPORTARCommand DB 08h,'EXPORTAR'
 
+
+isOperationValid DB 0
 ; ------------------------------------
 
 ; ------------------------------------
@@ -94,7 +96,6 @@ bufferPrintOneChar DB 02h dup('$')
 ; Buffer del teclado
 
 colonChar DB ':$'
-currentCommandId DB 00h
 isRunProgram DB 00h
 keyBoardBuffer DB 102h dup (0ff, '$')
 

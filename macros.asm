@@ -49,6 +49,7 @@ mStartProgram macro
         mExit
 endm
 
+
 mEvaluatePrompt macro
     LOCAL startEvaluate, exeGuardar, exeImportar, exeSuma, exeSalir, endEvaluate, commandNotFound
     push AX
@@ -775,7 +776,7 @@ mReadHeadersCsv macro
 endm
 
 mSuma macro
- LOCAL start, isAsteriskArg1, isNumberArg1, isCellArg1, isAsteriskArg2, isNumberArg2, isCellArg2, evaluateArg2, errorArgs, success
+ LOCAL start, isAsteriskArg1, isNumberArg1, isCellArg1, isAsteriskArg2, isNumberArg2, isCellArg2, evaluateArg2, errorArgs, success, endSuma
  push AX
  push BX
  push DI
