@@ -850,32 +850,37 @@ mProcessCell macro
     LOCAL start, end, endOfFile, continue, proccesPosition, fail
     push SI
     push CX
+    push AX
 
+    xor AX, AX
     start:
         mGetLineFromCsv
+
         mov CX, 00                 ;; CX nos va a servir para poder saber en qué posición se debe insertar el numero
 
         lea SI, fileLineBuffer
 
+        push DX
         proccesPosition:
 
             mIsNumberForCell        ;; Preguntamos si la celda es un número
-            mPrintPartialDirection SI
-            mWaitEnter
-
-            cmp DL, 00              ;; O si devuelve que no es un número, entonces marcamos error
+            cmp DL, 00h              ;; O si devuelve que no es un número, entonces marcamos error
             je fail
-            
+
             ;; Si todo está bien, entonces vamos a utilizar el número
             
             cmp DL, 02              ;; Avanza de posición hasta que termina con $$$ 
             je continue             ;; Y evaluamos la siguiente línea
 
-            jmp proccesPosition
+            inc SI                          ;; Nos saltamos el tabulador que viene después del número
 
+            jmp proccesPosition
         continue:
-            cmp DL, 02h
+            pop DX
+
+            cmp DL, 02
             je endOfFile
+
             jmp start
 
     endOfFile:
@@ -886,6 +891,7 @@ mProcessCell macro
         mov DL, 00
 
     end:
+        pop AX
         pop CX
         pop SI
 endm
@@ -924,23 +930,28 @@ mIsNumberForCell macro
     push BX
     push CX
     push DI
-                
+    
+    mov AX, 00              ;; Limpiamos a AX
     mov CX, 00              ;; Este llevara el control de cuantas posiciones aumentar en SI en caso de que sí sea necesario
     mov BX, SI              ;; Copiamos la direccion de memoria de SI para no modificar SI si no es necesario
     mov DL, 01h             ;; Cargamos en un inicio a DL con 01 para indicar que es verdadero
    
     start:
-        
         mov AL, [BX]
-    
         cmp AL, 2Ch          ;; Si llegamos a la coma y todo está correcto, entonces generamos el numero
         je success
 
-        cmp AL, 24h          ;; Comparamos que si es caracter nulo, llegamos al final
+        cmp AL, 00           ;; Valor nulo
         je endOfBuffer
 
-        cmp AL, 0Dh          ;; O comparamos que no sea un valor de retorno
-        je success
+        cmp AL, 0Ah         ;; Nueva linea
+        je endOfBuffer
+
+        cmp AL, 0Dh         ;; O comparamos que no sea un valor de retorno
+        je endOfBuffer
+
+        cmp AL, '$'          ;; Comparamos que si es caracter de dolar, llegamos al final
+        je endOfBuffer
  
         cmp AL, 30h          ;; Comparamos que el ASCII no sea menor al ASCII DE 1
         jb isNot
@@ -980,7 +991,6 @@ mIsNumberForCell macro
                 inc BX                          ;; Incrementamos DI
                 inc SI                          ;; Incrementamos SI, para avanzar en el buffer
                 loop createNumber               ;; Ciclamos
-            inc SI
             mStringToNum                    ;; Convertimos el String a número
 
     end:
