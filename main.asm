@@ -23,15 +23,15 @@ PORTABCommand DB 016h,'SEPARADO POR TABULADOR'
 ; ------------------------------------
 ; Comandos para operaciones sobre celdas
 GUARDARCommand DB 07h, 'GUARDAR', '$'
-SUMACommand DB 04h,'SUMA'
-RESTACommand DB 05h,'RESTA'
-MULTIPLICACIONCommand DB 0Eh,'MULTIPLICACION'
-DIVIDIRCommand DB 07h,'DIVIDIR'
-POTENCIARCommand DB 09,'POTENCIAR'
-OLOGICOCommand DB 07h,'OLOGICO'
-YLOGICOCommand DB 07h,'YLOGICO'
-OXLOGICOCommand DB 08h,'OXLOGICO'
-NOLOGICOCommand DB 08h,'NOLOGICO'
+SUMACommand DB 04h,'SUMA', '$'
+RESTACommand DB 05h,'RESTA', '$'
+MULTIPLICACIONCommand DB 0Eh,'MULTIPLICACION', '$'
+DIVIDIRCommand DB 07h,'DIVIDIR', '$'
+POTENCIARCommand DB 09,'POTENCIAR', '$'
+OLOGICOCommand DB 07h,'OLOGICO', '$'
+YLOGICOCommand DB 07h,'YLOGICO', '$'
+OXLOGICOCommand DB 08h,'OXLOGICO', '$'
+NOLOGICOCommand DB 08h,'NOLOGICO', '$'
 ; ------------------------------------
 ; ------------------------------------
 ; Comandos para operaciones sobre rangos
@@ -99,9 +99,10 @@ isRunProgram DB 00h
 keyBoardBuffer DB 102h dup (0ff, '$')
 
 ; ------------------------------------
-; Parametros para GUARDAR
+; Parametros para operaciones entre celdas
 
 guardarParametroNumero DW 0
+guardarParametroNumero2 DW 0
 
 ; ------------------------------------
 ; ------------------------------------

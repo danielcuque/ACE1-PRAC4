@@ -286,8 +286,6 @@ mCompareCommand macro commandStr
 endm
 
 
-
-
 ;; Este macro identifica si la cadena de caracteres es un numero
 ;; Si logra identificar un número, entonces modifica la posición de SI hasta donde encuentre espacios
 ;; Si no logra identificar un número, no hace nada con el indice SI
@@ -416,8 +414,9 @@ mIsNumber macro
 
         inc BX
         inc CX              ;; Incrementamos CX para poder hacer un loop y guardar el número recuperado en formato string
+        
         jmp start
-
+ 
     isNot:
         mov DL, 00h         ;; Si no es número, entonces seteamos a DL como 0 y lo retornarmos
         jmp end
@@ -425,6 +424,11 @@ mIsNumber macro
     success:
         xor AX, AX                          ;; Limpiamos a AX
         mov BX, offset recoveredStr      ;; Movemos la direccion de memoria del número a recuperar para insertarle datos
+
+        ; mov [numberGotten], 00
+        ; mov [numberGotten], CX
+        ; mPrintNumberConverted
+        ; mWaitEnter
 
         cmp CX, 07h                         ;; Si el número es mayor a 5, significa que no es válido
         jl generateNumber                   ;; Si es menor a 5, entonces recuperamos el número
@@ -442,10 +446,9 @@ mIsNumber macro
                 inc BX                          ;; Incrementamos DI
                 inc SI                          ;; Incrementamos SI, para avanzar en el buffer
                 loop createNumber               ;; Ciclamos
+                
                 mStringToNum                    ;; Convertimos el String a número
-
-        mov DL, 01h             ;; Cargamos en un inicio a DL con 01 para indicar que es verdadero
-
+                mov DL, 01
     end:
     pop DI
     pop CX
@@ -772,14 +775,127 @@ mReadHeadersCsv macro
 endm
 
 mSuma macro
- LOCAL start, end, fail, success
- start: 
+ LOCAL start, isAsteriskArg1, isNumberArg1, isCellArg1, isAsteriskArg2, isNumberArg2, isCellArg2, evaluateArg2, errorArgs, success
+ push AX
+ push BX
+ push DI
+ 
+ add SI, 04h
+
+;; Nos saltamos los espacios en blanco entre los argumentos
+ mSkipWhiteSpace 
+ cmp DL, 00h
+ je errorArgs
+
+;; Aquí obtenemos el primer argumento que puede ser [VAL_RET | NUM | CELDA]
+
+ mov AL, [SI] ;; Cargamos el primer caracter a AL y comparamos si es asterisco, si sí es, entonces avanzamos a isAsterisk
+
+ cmp AL, 02Ah
+ je isAsteriskArg1
+
+ mIsNumber
+ cmp DL, 00
+ jne isNumberArg1
+
+ mIsCell
+ cmp Dl, 00
+ jne isCellArg1
+ jmp errorArgs
+
+;; LA suma es A + B
+
+ isAsteriskArg1:
+    mov DI, offset returnValue              ;; Obtenemos el valor del valor de retorno
+    mov BX, [DI]                            
+    mov [guardarParametroNumero], BX        ;; Aquí guardamos el valor de A
+    jmp evaluateArg2                        
+    
+ isNumberArg1:
+    mov BX, [numberGotten]                  ;; Si es un numero, entonces obtenemos el numero que se generó
+    mov [guardarParametroNumero], BX        ;; y lo guardamos en el parametro A
+    jmp evaluateArg2                        ;; Saltamos a evaluar B
+
+ isCellArg1:
+    push SI
+        mov DI, offset cellPosition         ;; Si es una celda, entonces obtenemos el valor de dicha celda
+        mov SI, offset mainTable            ;; Obtenemos la posición de memoria del tablero
+        add SI, [DI]                        ;; Nos movemos hasta esa posición
+        mov BX, [SI]                        ;; Obtenemos el valor de esa celda
+        mov [guardarParametroNumero], BX    ;; Y lo guardamos en el parámetro 1
+    pop SI
+
+ evaluateArg2:
+    
+    mSkipWhiteSpace                         ;; Nos saltamos los espacios
+    cmp DL, 00h
+    je errorArgs
+
+    mCompareCommand YCommand                ;; Comparamos que esté el comando Y
+    cmp DL, 00
+    je errorArgs
+
+    add SI, 01h                             ;; Avanzamos el espacio
+
+    mSkipWhiteSpace
+    cmp DL, 00
+    je errorArgs
+
+    mov AL, [SI] ;; Cargamos el primer caracter a AL y comparamos si es asterisco, si sí es, entonces avanzamos a isAsterisk
+
+    cmp AL, 02Ah
+    je isAsteriskArg2
+
+    mIsNumber
+    cmp DL, 00
+    jne isNumberArg2
+
+    mIsCell
+    cmp Dl, 00
+    jne isCellArg2
+
+    jmp errorArgs
+
+    isAsteriskArg2:
+        mov DI, offset returnValue
+        mov BX, [DI]
+        mov [guardarParametroNumero2], BX        ;; Aquí guardamos el valor de A
+        jmp success
+
+    isNumberArg2:
+        mov BX, [numberGotten]
+        mov [guardarParametroNumero2], BX
+        jmp success
+
+    isCellArg2:
+        push SI
+            mov DI, offset cellPosition
+            mov AX, [DI]
+            mov SI, offset mainTable
+            add SI, AX
+            mov BX, [SI]
+            mov [guardarParametroNumero2], BX
+        pop SI
+
  success:
-    mov DL, 01
-    jmp end
- fail:
-    mov DL, 00
- end:
+    mov DI, offset guardarParametroNumero
+    mov SI, offset guardarParametroNumero2
+    mov AX, [DI]
+    add AX, [SI]
+
+    mov [returnValue], 00
+    mov  [returnValue], AX
+    jmp endSuma
+
+ errorArgs:
+        mPrintMsg errorArgsStr
+        mPrintMsg SUMACommand
+        mPrintMsg newLine
+        mWaitEnter
+ endSuma:
+    pop DI
+    pop BX
+    pop AX
 endm
 
 mResta macro
@@ -1053,7 +1169,7 @@ endm
 
 ;; Este macro avanza en la posición del buffer en el que se carga
 mNumberForCell macro
-    LOCAL start, createNumber, success, isNot, end, generateNumber
+    LOCAL start1, createNumber2, success2, endOfBuffer2, isNot2, end2, generateNumber2
     push AX
     push BX
     push CX
@@ -1064,64 +1180,64 @@ mNumberForCell macro
     mov BX, SI              ;; Copiamos la direccion de memoria de SI para no modificar SI si no es necesario
     mov DL, 01h             ;; Cargamos en un inicio a DL con 01 para indicar que es verdadero
    
-    start:
+    start1:
         mov AL, [BX]
         cmp AL, 09h          ;; Si llegamos a la coma y todo está correcto, entonces generamos el numero
-        je success
+        je success2
 
         cmp AL, 00           ;; Valor nulo
-        je endOfBuffer
+        je endOfBuffer2
 
         cmp AL, 0Ah         ;; Nueva linea
-        je endOfBuffer
+        je endOfBuffer2
 
         cmp AL, 0Dh         ;; O comparamos que no sea un valor de retorno
-        je endOfBuffer
+        je endOfBuffer2
 
         cmp AL, '$'          ;; Comparamos que si es caracter de dolar, llegamos al final
-        je endOfBuffer
+        je endOfBuffer2
  
         cmp AL, 30h          ;; Comparamos que el ASCII no sea menor al ASCII DE 1
-        jb isNot
+        jb isNot2
 
         cmp AL, 39h          ;; Comparamos que el ASCII no sea mayor al ASCII de 9
-        ja isNot
+        ja isNot2
 
         inc BX
         inc CX               ;; Incrementamos CX para poder hacer un loop y guardar el número recuperado en formato string
-        jmp start
+        jmp start1
 
-    isNot:
+    isNot2:
         mov DL, 00h          ;; Si no es número, entonces seteamos a DL como 0 y lo retornarmos
-        jmp end
+        jmp end2
 
-    endOfBuffer:
+    endOfBuffer2:
         mov DL, 02h          ;; El codigo 02 será para decir que el buffer terminó
         
-    success:
+    success2:
         xor AX, AX                          ;; Limpiamos a AX
         mov BX, offset recoveredStr      ;; Movemos la direccion de memoria del número a recuperar para insertarle datos
         
         cmp CX, 07h                         ;; Si el número es mayor a 5, significa que no es válido
-        jl generateNumber                   ;; Si es menor a 5, entonces recuperamos el número
+        jl generateNumber2                   ;; Si es menor a 5, entonces recuperamos el número
 
         mPrintMsg errorSizeOfNumber         ;; si no es válido, lo devolvemos a isNot    
-        jmp isNot
+        jmp isNot2
         
-        generateNumber:
+        generateNumber2:
 
             mResetrecoveredStr
 
-            createNumber:
+            createNumber2:
                 
                 mov AL, [SI]                    ;; Movemos el valor que se encuentra en SI a AX, por ejemplo, si en Si está 1, entonces lo movemos
                 mov [BX], AL                    ;; Le insertamos ese valor a la variable de recoveredStr
                 inc BX                          ;; Incrementamos DI
                 inc SI                          ;; Incrementamos SI, para avanzar en el buffer
-                loop createNumber               ;; Ciclamos
+                loop createNumber2               ;; Ciclamos
                 mStringToNum                    ;; Convertimos el String a número
 
-    end:
+    end2:
         pop DI
         pop CX
         pop BX
