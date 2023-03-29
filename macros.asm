@@ -35,7 +35,6 @@ mWaitEnter macro
         cmp AL, 0Dh
         jne wait_enter
 endm
-; ------------------------------------
 
 mStartProgram macro
     LOCAL startProgram, exitProgram
@@ -49,6 +48,24 @@ mStartProgram macro
         mExit
 endm
 
+; Macro para leer con el teclado y guardarlo en el buffer del teclado
+mGetInputKeyboard macro
+    push DX
+    push AX
+    push CX
+
+    mEmptyBuffer keyBoardBuffer
+
+    mPrintMsg colonChar
+
+    mov DX, offset keyBoardBuffer
+    mov AH, 0Ah
+    int 21h
+
+    pop CX
+    pop AX
+    pop DX
+endm
 
 mEvaluatePrompt macro
     LOCAL startEvaluate, exeGuardar, exeImportar, exeSuma, exeSalir, endEvaluate, commandNotFound
@@ -147,23 +164,30 @@ mGuardar macro
     ;; Por ejemplo, si se ingresa el comando GUARDAR 123 EN A1, el índice SI está posicionado en la dirección de memoria de 1
 
     startGuardar:
+        
         mEvaluateGuardarArg1
         cmp DL, 00                  ;; Si la función retorna 00, significa que los argumentos son incorrectos
-        je errorArgs                ;;
+        je errorArgs                
 
         mSkipWhiteSpace             ;; Nos saltamos los espacios
         cmp DL, 00                  
         je errorArgs
+
+        mShowTest
 
         mCompareCommand ENCommand   ;; Nos aseguramos que venga la palabra EN
         cmp DL, 00                  
         je errorArgs
 
         add SI, 02h                 ;; Avanzamos en el buffer
+
+        mShowTest
     
         mSkipWhiteSpace             ;; Nos saltamos los espacios otra vez
         cmp DL, 00
         je errorArgs
+
+        mShowTest
 
         mEvaluateGuardarArg2        ;; Evaluamos el argumento 2, que es únicamente una celda
         cmp DL, 00
@@ -202,7 +226,7 @@ mEvaluateGuardarArg1 macro
         je isAsterisk                   ;; Si sí lo es, saltamos a la etiqueta que sirve para guardar el valor
 
         mIsNumber
-        cmp DL, 00
+        cmp [isOperationValid], 00
         jne isNumber
 
         mIsCell
@@ -214,6 +238,7 @@ mEvaluateGuardarArg1 macro
         mov DI, offset returnValue          ;; Apuntamos a la variable que tiene el valor de retorno
         mov BX, [DI]                        ;; Copiamos en BX el valor que tiene *
         mov [guardarParametroNumero], BX    ;; Lo copiamos en la variable del arg 1
+        inc SI
         jmp end 
 
     isNumber:
@@ -308,7 +333,7 @@ mIsCell macro
     je isNot
     
     mIsNumber               ;; Ahora verificamos el numero, si si es numero, avanzamos
-    cmp DL, 01h
+    cmp [isOperationValid], 01h
     jne isNot                ;; Aqui ponemos jne para no toparnos con el isNot
 
     ;; (Fila * 11 + Col) * 2
@@ -419,7 +444,7 @@ mIsNumber macro
         jmp start
  
     isNot:
-        mov DL, 00h         ;; Si no es número, entonces seteamos a DL como 0 y lo retornarmos
+        mov [isOperationValid], 00h         ;; Si no es número, entonces seteamos a DL como 0 y lo retornarmos
         jmp end
 
     success:
@@ -449,7 +474,7 @@ mIsNumber macro
                 loop createNumber               ;; Ciclamos
                 
                 mStringToNum                    ;; Convertimos el String a número
-                mov DL, 01
+                mov [isOperationValid], 01
     end:
     pop DI
     pop CX
@@ -796,7 +821,7 @@ mSuma macro
  je isAsteriskArg1
 
  mIsNumber
- cmp DL, 00
+ cmp [isOperationValid], 00
  jne isNumberArg1
 
  mIsCell
@@ -810,6 +835,7 @@ mSuma macro
     mov DI, offset returnValue              ;; Obtenemos el valor del valor de retorno
     mov BX, [DI]                            
     mov [guardarParametroNumero], BX        ;; Aquí guardamos el valor de A
+    inc SI
     jmp evaluateArg2                        
     
  isNumberArg1:
@@ -848,7 +874,7 @@ mSuma macro
     je isAsteriskArg2
 
     mIsNumber
-    cmp DL, 00
+    cmp [isOperationValid], 00
     jne isNumberArg2
 
     mIsCell
@@ -862,6 +888,7 @@ mSuma macro
         mov DI, offset returnValue
         mov BX, [DI]
         mov [guardarParametroNumero2], BX        ;; Aquí guardamos el valor de A
+        inc SI
         jmp success
 
     isNumberArg2:
@@ -1529,26 +1556,6 @@ mEmptyBufferWithZero macro buffer
 endm
 
 
-; ------------------------------------
-; Macro para leer con el teclado y guardarlo en el buffer del teclado
-mGetInputKeyboard macro
-    push DX
-    push AX
-    push CX
-
-    mEmptyBuffer keyBoardBuffer
-
-    mPrintMsg colonChar
-
-    mov DX, offset keyBoardBuffer
-    mov AH, 0Ah
-    int 21h
-
-    pop CX
-    pop AX
-    pop DX
-endm
-; ------------------------------------
 ; ------------------------------------
 ; Macro para salir del programa
 mExit macro
