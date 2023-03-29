@@ -69,6 +69,10 @@ colName DB 0Dh,'      A      B      C      D      E      F      G      H      I 
 mainTable DW 253 dup(0)
 cellPosition DW 0
 colValue DB 0
+
+;;
+colCounter DW 0
+rowCounter DW 0
 ; ------------------------------------
 ; Parametros para el comando IMPORTAR
                      

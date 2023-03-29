@@ -855,18 +855,16 @@ mProcessCell macro
     push AX
 
     xor AX, AX
-    xor BX, BX
+    mov [rowCounter], 0
     
     start:
         mGetLineFromCsv
 
-        mov CX, 00                          ;; CX nos va a servir para poder saber en qué posición se debe insertar el numero
+        mov [colCounter], 00                          ;; BX nos va a servir para poder saber en qué posición se debe insertar el numero
 
         lea SI, fileLineBuffer              ;; Vamos a obtener la la fila para procesarla con el isNumForCell
 
         push DX
-        push DI
-
         proccesPosition:
 
             mIsNumberForCell                ;; Preguntamos si la celda es un número
@@ -875,30 +873,67 @@ mProcessCell macro
 
             ;; Si todo está bien, entonces vamos a utilizar el número
             ;; Vamos a insertar numero por número bajo la siguiente lógica
-            ;; CX va a indicar en que numero de fila se debe de meter la celda,
+            ;; BX va a indicar en que numero de fila se debe de meter la celda,
             ;; por lo que cada vez que se cambie de fila, se aumenta en 1
-            ;; Cada vez que se lea una línea, CX empezará en 0
-            ;; A su vez, BX va a acceder a las posiciones de memoria de la columna
-            ;; Para que la posicion de la celda va a ser (CX, buffer[BX])
+            ;; Cada vez que se lea una línea, BX empezará en 0
+            ;; A su vez, CX va a acceder a las posiciones de memoria de la columna
+            ;; Para que la posicion de la celda va a ser (BX, buffer[CX])
+            ;; El numero que hay que guardar es el que está en [numberGotten]
+            push DX
+            push BX
+            push AX
+            push DI
             
-            lea DI, bufferColumnsPosition   ;; Cargamos la posición de memoria en la que se guardan las posiciones de la columna
-            
+            mov DI, offset bufferColumnsPosition   ;; Cargamos la posición de memoria en la que se guardan las posiciones de la columna
+            mov DX, 00
+            mov AX, 0Bh                     ;; Cargamos a AX el valor de 11
+            mov BX, [rowCounter]
+            mul BX                          ;; Multiplicamos BX(fila) * 11
 
+            mov CX, [colCounter]
+
+            add DI, CX
+            mov BL, [DI]
+
+            add AX, BX                     ;; El valor de la columna está en [DI + CX]
+
+            mov BX, 02h                     ;; Le cargamos a BX un 02 para encontrar la posición
+            mul BX                          ;; Ahora en AX está (fila*11 + 11) entonces ahora me queda multiplicar ese valor x2
+
+            cmp AX, 1FAh                    ;; El valor se almacena en AX
+            ja fail
+            
+            lea DI, mainTable
+            add DI, AX
+            mov BX, [numberGotten]
+            mov [DI], BX
+
+            pop DI
+            pop AX
+            pop BX
+            pop DX
             
             cmp DL, 02                      ;; Avanza de posición hasta que termina con $$$ 
             je continue                     ;; Y evaluamos la siguiente línea
+
             inc SI                          ;; Nos saltamos el tabulador que viene después del número
-            inc CX
+
+            mov AX, [colCounter]
+            inc AX
+            mov [colCounter], AX
+
             jmp proccesPosition
 
         continue:
-            pop DI
             pop DX
 
             cmp DL, 02
             je endOfFile
 
-            inc BX
+            mov AX, [rowCounter]
+            inc AX
+            mov [rowCounter], AX
+
             jmp start
 
     endOfFile:
@@ -907,7 +942,6 @@ mProcessCell macro
 
     fail:
         mov DL, 00
-
     end:
         pop AX
         pop BX
