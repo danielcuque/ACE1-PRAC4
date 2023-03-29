@@ -857,6 +857,7 @@ mSuma macro
     jmp errorArgs
 
     isAsteriskArg2:
+        
         mov DI, offset returnValue
         mov BX, [DI]
         mov [guardarParametroNumero2], BX        ;; Aquí guardamos el valor de A
