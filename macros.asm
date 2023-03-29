@@ -78,15 +78,15 @@ mEvaluatePrompt macro
 
     mCompareCommand SUMACommand
     cmp DL, 00
-    jne exeGuardar
+    jne exeSuma
 
     mCompareCommand RESTACommand
     cmp DL, 00
-    jne exeGuardar
+    jne exeResta
 
     mCompareCommand MULTIPLICACIONCommand
     cmp DL, 00
-    jne exeGuardar
+    jne exeMul
 
     jmp commandNotFound
 
@@ -103,6 +103,18 @@ mEvaluatePrompt macro
     
     exeImportar:
         mImportar
+        jmp endEvaluate
+
+    exeSuma:
+        mSuma
+        jmp endEvaluate
+
+    exeResta:
+        mResta
+        jmp endEvaluate
+
+    exeMul:
+        mMul
         jmp endEvaluate
     
     commandNotFound:
@@ -265,6 +277,9 @@ mCompareCommand macro commandStr
     mov DI, offset commandStr
     mCompareStr
 endm
+
+
+
 
 ;; Este macro identifica si la cadena de caracteres es un numero
 ;; Si logra identificar un número, entonces modifica la posición de SI hasta donde encuentre espacios
@@ -485,11 +500,11 @@ mImportar macro
         cmp DL, 00
         je fail
 
-        ; mCompareCommand PORTABCommand   ;; Comparamos que el comando esté completo
-        ; cmp DL, 00
-        ; je fail
+        mCompareCommand PORTABCommand   ;; Comparamos que el comando esté completo
+        cmp DL, 00
+        je fail
 
-        ; add SI, 011h                    ;; Aumentamos el contador de SI en 11 que es la cantida de palabras que tiene 'SEPARADO POR TAB'
+        add SI, 011h                    ;; Aumentamos el contador de SI en 11 que es la cantida de palabras que tiene 'SEPARADO POR TAB'
 
         mReadFile                       ;; Cargamos la información del archivo al buffer
         jmp end
@@ -652,7 +667,7 @@ mReadHeadersCsv macro
         cmp AL, 0Ah                 ;; O si encuentra un salto de línea, significa que terminó
         je success
 
-        cmp AL, 02Ch                ;; 02C = COMA (USAR ASCII TAB)
+        cmp AL, 09h                 ;; Tab
         je changeChar               ;; Si encuentra un tabulador, entonces lo reemplazamos con un signo de dolar para poder imprimirlo
 
         jmp continue                ;; Si no es ninguna de las anteriores, entonces seguimos iterando hasta terminar la línea
@@ -738,7 +753,49 @@ mReadHeadersCsv macro
     pop DI
 endm
 
+mSuma macro
+ LOCAL start, end, fail, success
+ start: 
+ success:
+    mov DL, 01
+    jmp end
+ fail:
+    mov DL, 00
+ end:
+endm
 
+mResta macro
+ LOCAL start, end, fail, success
+ start: 
+ success:
+    mov DL, 01
+    jmp end
+ fail:
+    mov DL, 00
+ end:
+endm
+
+mMul macro
+ LOCAL start, end, fail, success
+ start: 
+ success:
+    mov DL, 01
+    jmp end
+ fail:
+    mov DL, 00
+ end:
+endm
+
+mDiv macro
+ LOCAL start, end, fail, success
+ start: 
+ success:
+    mov DL, 01
+    jmp end
+ fail:
+    mov DL, 00
+ end:
+endm
 
 ;; DL == 0, no existe la columna
 ;; DL == 1, es correcta
@@ -991,7 +1048,7 @@ mIsNumberForCell macro
    
     start:
         mov AL, [BX]
-        cmp AL, 2Ch          ;; Si llegamos a la coma y todo está correcto, entonces generamos el numero
+        cmp AL, 09h          ;; Si llegamos a la coma y todo está correcto, entonces generamos el numero
         je success
 
         cmp AL, 00           ;; Valor nulo
@@ -1051,12 +1108,6 @@ mIsNumberForCell macro
         pop CX
         pop BX
         pop AX
-endm
-
-
-
-mSuma macro
-
 endm
 
 ;; Este macro avanza el macro hasta encontrar una palabra
