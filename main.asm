@@ -12,7 +12,7 @@ rowDimension equ 23t ; 23 filas
 ENCommand DB 02h,'EN'
 YCommand DB 01h,'Y'
 ENTRECommand DB 05h,'ENTRE'
-ALACommand DB 04,'A LA'
+ALACommand DB 04h,'A LA'
 HASTACommand DB 05h,'HASTA'
 DESDECommand DB 05h,'DESDE'
 HACIACommand DB 05h,'HACIA'
@@ -22,16 +22,16 @@ PORTABCommand DB 016h,'SEPARADO POR TABULADOR'
 
 ; ------------------------------------
 ; Comandos para operaciones sobre celdas
-GUARDARCommand DB 07h, 'GUARDAR', '$'
-SUMACommand DB 04h,'SUMA', '$'
-RESTACommand DB 05h,'RESTA', '$'
-MULTIPLICACIONCommand DB 0Eh,'MULTIPLICACION', '$'
-DIVIDIRCommand DB 07h,'DIVIDIR', '$'
-POTENCIARCommand DB 09,'POTENCIAR', '$'
-OLOGICOCommand DB 07h,'OLOGICO', '$'
-YLOGICOCommand DB 07h,'YLOGICO', '$'
-OXLOGICOCommand DB 08h,'OXLOGICO', '$'
-NOLOGICOCommand DB 08h,'NOLOGICO', '$'
+GUARDARCommand          DB 07h, 'GUARDAR', '$'
+SUMACommand             DB 04h, 'SUMA', '$'
+RESTACommand            DB 05h, 'RESTA', '$'
+MULTIPLICACIONCommand   DB 0Eh, 'MULTIPLICACION', '$'
+DIVIDIRCommand          DB 07h, 'DIVIDIR', '$'
+POTENCIARCommand        DB 09h,  'POTENCIAR', '$'
+OLOGICOCommand          DB 07h, 'OLOGICO', '$'
+YLOGICOCommand          DB 07h, 'YLOGICO', '$'
+OXLOGICOCommand         DB 08h, 'OXLOGICO', '$'
+NOLOGICOCommand         DB 08h, 'NOLOGICO', '$'
 ; ------------------------------------
 
 ; ------------------------------------
