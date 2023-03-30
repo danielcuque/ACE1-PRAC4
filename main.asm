@@ -117,6 +117,7 @@ errorHeadersStr DB 'Columna Incorrecta $'
 errorCellsStr DB 'Error al leer las celdas $'
 errorCloseFile DB 'Error al cerrar el archivo', 0Dh, 0Ah, '$'
 errorOpenFile DB  'Error al abrir el archivo', 0Dh, 0Ah, '$'
+errorZero  DB 'La division entre 0 no es posible $'
 ; ------------------------------------
 
 .CODE
