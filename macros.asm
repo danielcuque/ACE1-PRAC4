@@ -1856,10 +1856,10 @@ mOXLogic macro
 
         mov AX, [DI]
         mov BX, [SI]
-        xor CX, BX
+        xor AX, BX
 
         mov [returnValue], 00
-        mov  [returnValue], CX
+        mov  [returnValue], AX
         jmp endOXLogic
 
     errorArgs:
