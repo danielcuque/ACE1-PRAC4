@@ -110,6 +110,31 @@ mEvaluatePrompt macro
     cmp DL, 00
     jne exeDiv
 
+    mCompareCommand POTENCIARCommand
+    cmp DL, 00
+    jne exeDiv
+
+    mCompareCommand POTENCIARCommand
+    cmp DL, 00
+    jne exePot
+
+	mCompareCommand OLOGICOCommand
+	cmp DL,00
+	jne exeOlogic
+
+	mCompareCommand YLOGICOCommand
+	cmp DL,00
+	jne exeYlogic
+
+	mCompareCommand OXLOGICOCommand
+	cmp DL,00
+	jne exeOxlogic
+
+	mCompareCommand NOLOGICOCommand
+	cmp DL,00
+	jne exeNologic
+
+
     jmp commandNotFound
 
     exeSalir:
@@ -138,6 +163,27 @@ mEvaluatePrompt macro
     exeDiv:
         mDiv
         jmp endEvaluate
+	
+	exePot:
+		mPotencia
+		jmp endEvaluate
+
+	exeOlogic:
+		mOLogic
+		jmp endEvaluate
+
+	exeYlogic:
+		mYLogic
+		jmp endEvaluate
+
+	exeOxlogic:
+		mOLogic
+		jmp endEvaluate
+
+	exeNologic:
+		mNoLogic
+		jmp endEvaluate
+
     
     commandNotFound:
         mPrintMsg errorCommand
@@ -1311,6 +1357,639 @@ mDiv macro
         mPrintMsg newLine
         mWaitEnter
  endDiv:
+    pop DI
+    pop BX
+    pop AX
+endm
+
+mPotencia macro
+ LOCAL start, isAsteriskArg1, isNumberArg1, isCellArg1, isAsteriskArg2, isNumberArg2, isCellArg2, evaluateArg2, errorArgs, success, endPotencia
+ push AX
+ push BX
+ push DI
+ 
+ add SI, 05h
+
+;; Nos saltamos los espacios en blanco entre los argumentos
+ mSkipWhiteSpace 
+ cmp DL, 00h
+ je errorArgs
+
+;; Aquí obtenemos el primer argumento que puede ser [VAL_RET | NUM | CELDA]
+
+ mov AL, [SI] ;; Cargamos el primer caracter a AL y comparamos si es asterisco, si sí es, entonces avanzamos a isAsterisk
+
+ cmp AL, 02Ah
+ je isAsteriskArg1
+
+ mIsNumber
+ cmp [isOperationValid], 00
+ jne isNumberArg1
+
+ mIsCell
+ cmp Dl, 00
+ jne isCellArg1
+ jmp errorArgs
+
+;; La resta es A - B
+
+ isAsteriskArg1:
+    mov DI, offset returnValue              ;; Obtenemos el valor del valor de retorno
+    mov BX, [DI]                            
+    mov [guardarParametroNumero], BX        ;; Aquí guardamos el valor de A
+    inc SI
+    jmp evaluateArg2                        
+    
+ isNumberArg1:
+    mov BX, [numberGotten]                  ;; Si es un numero, entonces obtenemos el numero que se generó
+    mov [guardarParametroNumero], BX        ;; y lo guardamos en el parametro A
+    jmp evaluateArg2                        ;; Saltamos a evaluar B
+
+ isCellArg1:
+    push SI
+        mov DI, offset cellPosition         ;; Si es una celda, entonces obtenemos el valor de dicha celda
+        mov SI, offset mainTable            ;; Obtenemos la posición de memoria del tablero
+        add SI, [DI]                        ;; Nos movemos hasta esa posición
+        mov BX, [SI]                        ;; Obtenemos el valor de esa celda
+        mov [guardarParametroNumero], BX    ;; Y lo guardamos en el parámetro 1
+    pop SI
+
+ evaluateArg2:
+    
+    mSkipWhiteSpace                         ;; Nos saltamos los espacios
+    cmp DL, 00h
+    je errorArgs
+
+    mCompareCommand YCommand                ;; Comparamos que esté el comando Y
+    cmp DL, 00
+    je errorArgs
+
+    add SI, 01h                             ;; Avanzamos el espacio
+
+    mSkipWhiteSpace
+    cmp DL, 00
+    je errorArgs
+
+    mov AL, [SI] ;; Cargamos el primer caracter a AL y comparamos si es asterisco, si sí es, entonces avanzamos a isAsterisk
+
+    cmp AL, 02Ah
+    je isAsteriskArg2
+
+    mIsNumber
+    cmp [isOperationValid], 00
+    jne isNumberArg2
+
+    mIsCell
+    cmp Dl, 00
+    jne isCellArg2
+
+    jmp errorArgs
+
+    isAsteriskArg2:
+        
+        mov DI, offset returnValue
+        mov BX, [DI]
+        mov [guardarParametroNumero2], BX        ;; Aquí guardamos el valor de A
+        inc SI
+        jmp success
+
+    isNumberArg2:
+        mov BX, [numberGotten]
+        mov [guardarParametroNumero2], BX
+        jmp success
+
+    isCellArg2:
+        push SI
+            mov DI, offset cellPosition
+            mov AX, [DI]
+            mov SI, offset mainTable
+            add SI, AX
+            mov BX, [SI]
+            mov [guardarParametroNumero2], BX
+        pop SI
+
+ success:
+    mov DI, offset guardarParametroNumero
+    mov SI, offset guardarParametroNumero2
+    mov AX, [DI]
+    sub AX, [SI]
+
+    mov [returnValue], 00
+    mov  [returnValue], AX
+    jmp endPotencia
+
+ errorArgs:
+        mPrintMsg errorArgsStr
+        mPrintMsg RESTACommand
+        mPrintMsg newLine
+        mWaitEnter
+ endPotencia:
+    pop DI
+    pop BX
+    pop AX
+endm
+
+mOLogic macro 
+	LOCAL start, isAsteriskArg1, isNumberArg1, isCellArg1, isAsteriskArg2, isNumberArg2, isCellArg2, evaluateArg2, errorArgs, success, endOLogic
+ push AX
+ push BX
+ push DI
+ 
+ add SI, 05h
+
+;; Nos saltamos los espacios en blanco entre los argumentos
+ mSkipWhiteSpace 
+ cmp DL, 00h
+ je errorArgs
+
+;; Aquí obtenemos el primer argumento que puede ser [VAL_RET | NUM | CELDA]
+
+ mov AL, [SI] ;; Cargamos el primer caracter a AL y comparamos si es asterisco, si sí es, entonces avanzamos a isAsterisk
+
+ cmp AL, 02Ah
+ je isAsteriskArg1
+
+ mIsNumber
+ cmp [isOperationValid], 00
+ jne isNumberArg1
+
+ mIsCell
+ cmp Dl, 00
+ jne isCellArg1
+ jmp errorArgs
+
+;; La resta es A - B
+
+ isAsteriskArg1:
+    mov DI, offset returnValue              ;; Obtenemos el valor del valor de retorno
+    mov BX, [DI]                            
+    mov [guardarParametroNumero], BX        ;; Aquí guardamos el valor de A
+    inc SI
+    jmp evaluateArg2                        
+    
+ isNumberArg1:
+    mov BX, [numberGotten]                  ;; Si es un numero, entonces obtenemos el numero que se generó
+    mov [guardarParametroNumero], BX        ;; y lo guardamos en el parametro A
+    jmp evaluateArg2                        ;; Saltamos a evaluar B
+
+ isCellArg1:
+    push SI
+        mov DI, offset cellPosition         ;; Si es una celda, entonces obtenemos el valor de dicha celda
+        mov SI, offset mainTable            ;; Obtenemos la posición de memoria del tablero
+        add SI, [DI]                        ;; Nos movemos hasta esa posición
+        mov BX, [SI]                        ;; Obtenemos el valor de esa celda
+        mov [guardarParametroNumero], BX    ;; Y lo guardamos en el parámetro 1
+    pop SI
+
+ evaluateArg2:
+    
+    mSkipWhiteSpace                         ;; Nos saltamos los espacios
+    cmp DL, 00h
+    je errorArgs
+
+    mCompareCommand YCommand                ;; Comparamos que esté el comando Y
+    cmp DL, 00
+    je errorArgs
+
+    add SI, 01h                             ;; Avanzamos el espacio
+
+    mSkipWhiteSpace
+    cmp DL, 00
+    je errorArgs
+
+    mov AL, [SI] ;; Cargamos el primer caracter a AL y comparamos si es asterisco, si sí es, entonces avanzamos a isAsterisk
+
+    cmp AL, 02Ah
+    je isAsteriskArg2
+
+    mIsNumber
+    cmp [isOperationValid], 00
+    jne isNumberArg2
+
+    mIsCell
+    cmp Dl, 00
+    jne isCellArg2
+
+    jmp errorArgs
+
+    isAsteriskArg2:
+        
+        mov DI, offset returnValue
+        mov BX, [DI]
+        mov [guardarParametroNumero2], BX        ;; Aquí guardamos el valor de A
+        inc SI
+        jmp success
+
+    isNumberArg2:
+        mov BX, [numberGotten]
+        mov [guardarParametroNumero2], BX
+        jmp success
+
+    isCellArg2:
+        push SI
+            mov DI, offset cellPosition
+            mov AX, [DI]
+            mov SI, offset mainTable
+            add SI, AX
+            mov BX, [SI]
+            mov [guardarParametroNumero2], BX
+        pop SI
+
+ success:
+    mov DI, offset guardarParametroNumero
+    mov SI, offset guardarParametroNumero2
+    mov AX, [DI]
+    sub AX, [SI]
+
+    mov [returnValue], 00
+    mov  [returnValue], AX
+    jmp endOLogic
+
+ errorArgs:
+        mPrintMsg errorArgsStr
+        mPrintMsg RESTACommand
+        mPrintMsg newLine
+        mWaitEnter
+ endOLogic:
+    pop DI
+    pop BX
+    pop AX
+endm
+
+mYLogic macro 
+	LOCAL start, isAsteriskArg1, isNumberArg1, isCellArg1, isAsteriskArg2, isNumberArg2, isCellArg2, evaluateArg2, errorArgs, success, endPotencia
+ push AX
+ push BX
+ push DI
+ 
+ add SI, 05h
+
+;; Nos saltamos los espacios en blanco entre los argumentos
+ mSkipWhiteSpace 
+ cmp DL, 00h
+ je errorArgs
+
+;; Aquí obtenemos el primer argumento que puede ser [VAL_RET | NUM | CELDA]
+
+ mov AL, [SI] ;; Cargamos el primer caracter a AL y comparamos si es asterisco, si sí es, entonces avanzamos a isAsterisk
+
+ cmp AL, 02Ah
+ je isAsteriskArg1
+
+ mIsNumber
+ cmp [isOperationValid], 00
+ jne isNumberArg1
+
+ mIsCell
+ cmp Dl, 00
+ jne isCellArg1
+ jmp errorArgs
+
+;; La resta es A - B
+
+ isAsteriskArg1:
+    mov DI, offset returnValue              ;; Obtenemos el valor del valor de retorno
+    mov BX, [DI]                            
+    mov [guardarParametroNumero], BX        ;; Aquí guardamos el valor de A
+    inc SI
+    jmp evaluateArg2                        
+    
+ isNumberArg1:
+    mov BX, [numberGotten]                  ;; Si es un numero, entonces obtenemos el numero que se generó
+    mov [guardarParametroNumero], BX        ;; y lo guardamos en el parametro A
+    jmp evaluateArg2                        ;; Saltamos a evaluar B
+
+ isCellArg1:
+    push SI
+        mov DI, offset cellPosition         ;; Si es una celda, entonces obtenemos el valor de dicha celda
+        mov SI, offset mainTable            ;; Obtenemos la posición de memoria del tablero
+        add SI, [DI]                        ;; Nos movemos hasta esa posición
+        mov BX, [SI]                        ;; Obtenemos el valor de esa celda
+        mov [guardarParametroNumero], BX    ;; Y lo guardamos en el parámetro 1
+    pop SI
+
+ evaluateArg2:
+    
+    mSkipWhiteSpace                         ;; Nos saltamos los espacios
+    cmp DL, 00h
+    je errorArgs
+
+    mCompareCommand YCommand                ;; Comparamos que esté el comando Y
+    cmp DL, 00
+    je errorArgs
+
+    add SI, 01h                             ;; Avanzamos el espacio
+
+    mSkipWhiteSpace
+    cmp DL, 00
+    je errorArgs
+
+    mov AL, [SI] ;; Cargamos el primer caracter a AL y comparamos si es asterisco, si sí es, entonces avanzamos a isAsterisk
+
+    cmp AL, 02Ah
+    je isAsteriskArg2
+
+    mIsNumber
+    cmp [isOperationValid], 00
+    jne isNumberArg2
+
+    mIsCell
+    cmp Dl, 00
+    jne isCellArg2
+
+    jmp errorArgs
+
+    isAsteriskArg2:
+        
+        mov DI, offset returnValue
+        mov BX, [DI]
+        mov [guardarParametroNumero2], BX        ;; Aquí guardamos el valor de A
+        inc SI
+        jmp success
+
+    isNumberArg2:
+        mov BX, [numberGotten]
+        mov [guardarParametroNumero2], BX
+        jmp success
+
+    isCellArg2:
+        push SI
+            mov DI, offset cellPosition
+            mov AX, [DI]
+            mov SI, offset mainTable
+            add SI, AX
+            mov BX, [SI]
+            mov [guardarParametroNumero2], BX
+        pop SI
+
+ success:
+    mov DI, offset guardarParametroNumero
+    mov SI, offset guardarParametroNumero2
+    mov AX, [DI]
+    sub AX, [SI]
+
+    mov [returnValue], 00
+    mov  [returnValue], AX
+    jmp endPotencia
+
+ errorArgs:
+        mPrintMsg errorArgsStr
+        mPrintMsg RESTACommand
+        mPrintMsg newLine
+        mWaitEnter
+ endPotencia:
+    pop DI
+    pop BX
+    pop AX
+endm
+mOLogic macro 
+	LOCAL start, isAsteriskArg1, isNumberArg1, isCellArg1, isAsteriskArg2, isNumberArg2, isCellArg2, evaluateArg2, errorArgs, success, endPotencia
+ push AX
+ push BX
+ push DI
+ 
+ add SI, 05h
+
+;; Nos saltamos los espacios en blanco entre los argumentos
+ mSkipWhiteSpace 
+ cmp DL, 00h
+ je errorArgs
+
+;; Aquí obtenemos el primer argumento que puede ser [VAL_RET | NUM | CELDA]
+
+ mov AL, [SI] ;; Cargamos el primer caracter a AL y comparamos si es asterisco, si sí es, entonces avanzamos a isAsterisk
+
+ cmp AL, 02Ah
+ je isAsteriskArg1
+
+ mIsNumber
+ cmp [isOperationValid], 00
+ jne isNumberArg1
+
+ mIsCell
+ cmp Dl, 00
+ jne isCellArg1
+ jmp errorArgs
+
+;; La resta es A - B
+
+ isAsteriskArg1:
+    mov DI, offset returnValue              ;; Obtenemos el valor del valor de retorno
+    mov BX, [DI]                            
+    mov [guardarParametroNumero], BX        ;; Aquí guardamos el valor de A
+    inc SI
+    jmp evaluateArg2                        
+    
+ isNumberArg1:
+    mov BX, [numberGotten]                  ;; Si es un numero, entonces obtenemos el numero que se generó
+    mov [guardarParametroNumero], BX        ;; y lo guardamos en el parametro A
+    jmp evaluateArg2                        ;; Saltamos a evaluar B
+
+ isCellArg1:
+    push SI
+        mov DI, offset cellPosition         ;; Si es una celda, entonces obtenemos el valor de dicha celda
+        mov SI, offset mainTable            ;; Obtenemos la posición de memoria del tablero
+        add SI, [DI]                        ;; Nos movemos hasta esa posición
+        mov BX, [SI]                        ;; Obtenemos el valor de esa celda
+        mov [guardarParametroNumero], BX    ;; Y lo guardamos en el parámetro 1
+    pop SI
+
+ evaluateArg2:
+    
+    mSkipWhiteSpace                         ;; Nos saltamos los espacios
+    cmp DL, 00h
+    je errorArgs
+
+    mCompareCommand YCommand                ;; Comparamos que esté el comando Y
+    cmp DL, 00
+    je errorArgs
+
+    add SI, 01h                             ;; Avanzamos el espacio
+
+    mSkipWhiteSpace
+    cmp DL, 00
+    je errorArgs
+
+    mov AL, [SI] ;; Cargamos el primer caracter a AL y comparamos si es asterisco, si sí es, entonces avanzamos a isAsterisk
+
+    cmp AL, 02Ah
+    je isAsteriskArg2
+
+    mIsNumber
+    cmp [isOperationValid], 00
+    jne isNumberArg2
+
+    mIsCell
+    cmp Dl, 00
+    jne isCellArg2
+
+    jmp errorArgs
+
+    isAsteriskArg2:
+        
+        mov DI, offset returnValue
+        mov BX, [DI]
+        mov [guardarParametroNumero2], BX        ;; Aquí guardamos el valor de A
+        inc SI
+        jmp success
+
+    isNumberArg2:
+        mov BX, [numberGotten]
+        mov [guardarParametroNumero2], BX
+        jmp success
+
+    isCellArg2:
+        push SI
+            mov DI, offset cellPosition
+            mov AX, [DI]
+            mov SI, offset mainTable
+            add SI, AX
+            mov BX, [SI]
+            mov [guardarParametroNumero2], BX
+        pop SI
+
+ success:
+    mov DI, offset guardarParametroNumero
+    mov SI, offset guardarParametroNumero2
+    mov AX, [DI]
+    sub AX, [SI]
+
+    mov [returnValue], 00
+    mov  [returnValue], AX
+    jmp endPotencia
+
+ errorArgs:
+        mPrintMsg errorArgsStr
+        mPrintMsg RESTACommand
+        mPrintMsg newLine
+        mWaitEnter
+ endPotencia:
+    pop DI
+    pop BX
+    pop AX
+endm
+mNoLogic macro 
+	LOCAL start, isAsteriskArg1, isNumberArg1, isCellArg1, isAsteriskArg2, isNumberArg2, isCellArg2, evaluateArg2, errorArgs, success, endPotencia
+ push AX
+ push BX
+ push DI
+ 
+ add SI, 05h
+
+;; Nos saltamos los espacios en blanco entre los argumentos
+ mSkipWhiteSpace 
+ cmp DL, 00h
+ je errorArgs
+
+;; Aquí obtenemos el primer argumento que puede ser [VAL_RET | NUM | CELDA]
+
+ mov AL, [SI] ;; Cargamos el primer caracter a AL y comparamos si es asterisco, si sí es, entonces avanzamos a isAsterisk
+
+ cmp AL, 02Ah
+ je isAsteriskArg1
+
+ mIsNumber
+ cmp [isOperationValid], 00
+ jne isNumberArg1
+
+ mIsCell
+ cmp Dl, 00
+ jne isCellArg1
+ jmp errorArgs
+
+;; La resta es A - B
+
+ isAsteriskArg1:
+    mov DI, offset returnValue              ;; Obtenemos el valor del valor de retorno
+    mov BX, [DI]                            
+    mov [guardarParametroNumero], BX        ;; Aquí guardamos el valor de A
+    inc SI
+    jmp evaluateArg2                        
+    
+ isNumberArg1:
+    mov BX, [numberGotten]                  ;; Si es un numero, entonces obtenemos el numero que se generó
+    mov [guardarParametroNumero], BX        ;; y lo guardamos en el parametro A
+    jmp evaluateArg2                        ;; Saltamos a evaluar B
+
+ isCellArg1:
+    push SI
+        mov DI, offset cellPosition         ;; Si es una celda, entonces obtenemos el valor de dicha celda
+        mov SI, offset mainTable            ;; Obtenemos la posición de memoria del tablero
+        add SI, [DI]                        ;; Nos movemos hasta esa posición
+        mov BX, [SI]                        ;; Obtenemos el valor de esa celda
+        mov [guardarParametroNumero], BX    ;; Y lo guardamos en el parámetro 1
+    pop SI
+
+ evaluateArg2:
+    
+    mSkipWhiteSpace                         ;; Nos saltamos los espacios
+    cmp DL, 00h
+    je errorArgs
+
+    mCompareCommand YCommand                ;; Comparamos que esté el comando Y
+    cmp DL, 00
+    je errorArgs
+
+    add SI, 01h                             ;; Avanzamos el espacio
+
+    mSkipWhiteSpace
+    cmp DL, 00
+    je errorArgs
+
+    mov AL, [SI] ;; Cargamos el primer caracter a AL y comparamos si es asterisco, si sí es, entonces avanzamos a isAsterisk
+
+    cmp AL, 02Ah
+    je isAsteriskArg2
+
+    mIsNumber
+    cmp [isOperationValid], 00
+    jne isNumberArg2
+
+    mIsCell
+    cmp Dl, 00
+    jne isCellArg2
+
+    jmp errorArgs
+
+    isAsteriskArg2:
+        
+        mov DI, offset returnValue
+        mov BX, [DI]
+        mov [guardarParametroNumero2], BX        ;; Aquí guardamos el valor de A
+        inc SI
+        jmp success
+
+    isNumberArg2:
+        mov BX, [numberGotten]
+        mov [guardarParametroNumero2], BX
+        jmp success
+
+    isCellArg2:
+        push SI
+            mov DI, offset cellPosition
+            mov AX, [DI]
+            mov SI, offset mainTable
+            add SI, AX
+            mov BX, [SI]
+            mov [guardarParametroNumero2], BX
+        pop SI
+
+ success:
+    mov DI, offset guardarParametroNumero
+    mov SI, offset guardarParametroNumero2
+    mov AX, [DI]
+    sub AX, [SI]
+
+    mov [returnValue], 00
+    mov  [returnValue], AX
+    jmp endPotencia
+
+ errorArgs:
+        mPrintMsg errorArgsStr
+        mPrintMsg RESTACommand
+        mPrintMsg newLine
+        mWaitEnter
+ endPotencia:
     pop DI
     pop BX
     pop AX

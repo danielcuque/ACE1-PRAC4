@@ -33,6 +33,7 @@ YLOGICOCommand DB 07h,'YLOGICO', '$'
 OXLOGICOCommand DB 08h,'OXLOGICO', '$'
 NOLOGICOCommand DB 08h,'NOLOGICO', '$'
 ; ------------------------------------
+
 ; ------------------------------------
 ; Comandos para operaciones sobre rangos
 LLENARCommand DB 06h,'LLENAR'
