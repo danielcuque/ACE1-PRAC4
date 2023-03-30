@@ -3,8 +3,6 @@ INCLUDE macros.asm
 .MODEl small
 .STACK
 .RADIX 16
-colDimension equ 11t ; 11 columnas
-rowDimension equ 23t ; 23 filas
 .DATA
 
 ; ------------------------------------
