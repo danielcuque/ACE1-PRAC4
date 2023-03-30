@@ -2154,27 +2154,6 @@ mProcessCell macro
         pop SI
 endm
 
-mTruncateFile macro
-    LOCAL failed
-    push CX
-
-    mov CX, 0
-    lea DX, offset 
-    mov AH, 03C
-
-    int 21h
-
-    jc failed
-
-    mov fileHandler, AX
-    jmp end:
-
-    failed:
-        
-
-    end:
-    pop CX
-endm
 
 mShowTest macro
     mPrintMsg testStr
